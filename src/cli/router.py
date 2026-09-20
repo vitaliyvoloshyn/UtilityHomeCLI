@@ -1,0 +1,55 @@
+import os
+
+from ..api import APIError, AuthError
+from .context import AppContext
+from .screens import *
+
+# Сюди ж імпортуєте інші екрани, наприклад, DataTableScreen
+
+
+class Router:
+    def __init__(self, context: AppContext):
+        self.context = context
+        # Реєструємо екрани: ключ — назва, значення — клас екрану
+        self._screens = {
+            "auth": AuthScreen(self.context),
+            "main_menu": MainMenuScreen(self.context),
+            "api_error": APIErrorScreen(self.context),
+            # "data_table": DataTableScreen(self.context),
+        }
+        self.current_screen_name = "main_menu"
+
+    def run(self):
+        try:
+            self.context.connect_to_server()
+        except AuthError:
+            self.current_screen_name = "auth"
+        except APIError as exc:
+            self.context.error_message = str(exc)
+            self.current_screen_name = "api_error"
+
+        while self.context.is_running:
+            # Отримуємо об'єкт поточного екрану
+            screen = self._screens.get(self.current_screen_name)
+
+            if not screen:
+                print(f"Помилка: Екран {self.current_screen_name} не знайдено.")
+                break
+
+            # Рендеримо екран і отримуємо назву наступного
+            self.clear_console()
+            next_screen = screen.render()
+
+            if next_screen == "logout":
+                self.context.logout()
+                return "auth"
+
+            if next_screen == "exit":
+                self.context.is_running = False
+                break
+
+            self.current_screen_name = next_screen
+
+    def clear_console(self):
+        os.system("cls" if os.name == "nt" else "clear")
+        # ...
