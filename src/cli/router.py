@@ -15,6 +15,8 @@ class Router:
             "auth": AuthScreen(self.context),
             "main_menu": MainMenuScreen(self.context),
             "api_error": APIErrorScreen(self.context),
+            "menu_unauth": MenuUnauthorized(self.context),
+            "register": RegisterScreen(self.context),
             # "data_table": DataTableScreen(self.context),
         }
         self.current_screen_name = "main_menu"
@@ -23,7 +25,7 @@ class Router:
         try:
             self.context.connect_to_server()
         except AuthError:
-            self.current_screen_name = "auth"
+            self.current_screen_name = "menu_unauth"
         except APIError as exc:
             self.context.error_message = str(exc)
             self.current_screen_name = "api_error"
@@ -38,11 +40,17 @@ class Router:
 
             # Рендеримо екран і отримуємо назву наступного
             self.clear_console()
-            next_screen = screen.render()
+            try:
+                next_screen = screen.render()
+            except AuthError:
+                next_screen = "menu_unauth"
+            except APIError as exc:
+                self.context.error_message = str(exc)
+                next_screen = "api_error"
 
             if next_screen == "logout":
                 self.context.logout()
-                return "auth"
+                next_screen = "menu_unauth"
 
             if next_screen == "exit":
                 self.context.is_running = False
@@ -51,5 +59,5 @@ class Router:
             self.current_screen_name = next_screen
 
     def clear_console(self):
-        os.system("cls" if os.name == "nt" else "clear")
-        # ...
+        # os.system("cls" if os.name == "nt" else "clear")
+        ...

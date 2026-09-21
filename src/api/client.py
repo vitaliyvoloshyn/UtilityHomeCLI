@@ -48,14 +48,12 @@ class APIClient:
         if csrf_token:
             self.session.cookies.set("csrftoken", csrf_token, domain="127.0.0.1")
             self.session.headers.update({"X-CSRFToken": csrf_token})
-        print("session_id", session_id, "csrf_token", csrf_token)
 
     def _set_csrf_header(self, token: str) -> None:
         self.session.headers.update({"X-CSRFToken": token})
 
     def refresh_csrf(self) -> str:
         """Отримати актуальний CSRF token та синхронізувати його із session."""
-        print("Запит на токен")
         try:
             response = self.session.get(CSRF_URL)
             response.raise_for_status()
@@ -94,7 +92,6 @@ class APIClient:
 
         try:
             response = self.session.request(method, url, json=json, timeout=timeout)
-            print("response", response.status_code)
 
             # Якщо отримали 403, пробуємо оновити токен ОДИН раз
             if csrf_required and response.status_code == 403 and retry_on_csrf:

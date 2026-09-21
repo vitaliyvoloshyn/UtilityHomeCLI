@@ -10,15 +10,6 @@ console = Console()
 
 class AuthScreen(BaseScreen):
     def render(self) -> str:
-        choice = inquirer.select(
-            message="Оберіть дію:",
-            choices=[
-                {"name": "Ввійти в акаунт", "value": "auth"},
-                {"name": "Вийти з акаунту", "value": "logout"},
-                {"name": "Закрити програму", "value": "exit"},
-            ],
-        ).execute()
-        return choice
 
         # Використовуємо inquirerpy для вводу
         email = inquirer.text(message="Введіть email:").execute()
