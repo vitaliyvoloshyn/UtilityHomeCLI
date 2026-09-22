@@ -1,32 +1,24 @@
-# screens/auth.py
-from InquirerPy import inquirer
-from rich.console import Console
-
 from ...api import APIError
-from .base import Screen
+from ..context import AppContext
+from .builder import builder
 
-console = Console()
 
-
-class RegisterScreen(Screen):
-    def render(self) -> str:
-
-        # Використовуємо inquirerpy для вводу
-        first_name = inquirer.text(message="Введіть своє імя:").execute()
-        Last_name = inquirer.text(message="Введіть своє прізвище:").execute()
-        email = inquirer.text(message="Введіть свій email:").execute()
-        password = inquirer.secret(message="Придумайте пароль:").execute()
-        try:
-            self.context.api.register(
-                {
-                    "email": email,
-                    "password": password,
-                    "first_name": first_name,
-                    "last_name": Last_name,
-                }
-            )
-        except APIError as e:
-            print(e)
-            input("Натисніть Enter, щоб повернутися в попереднє меню...")
-
-        return "menu_unauth"
+def register_screen(context: AppContext):
+    screen = (
+        builder.add_main_header("Не авторизований користувач")
+        .add_input_component(
+            {
+                "first_name": "Ваше ім'я: ",
+                "last_name": "Ваше прізвище: ",
+                "email": "Введіть email: ",
+                "password": "Введіть пароль: "
+            }
+        )
+        .build(context)
+    )
+    user_data = screen.show()
+    try:
+        context.api.register(user_data)
+    except APIError as e:
+        print(e)
+    return "menu_unauth"

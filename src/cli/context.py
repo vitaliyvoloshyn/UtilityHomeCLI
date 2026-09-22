@@ -1,8 +1,13 @@
-from ..api import APIClient
+from ..api import APIClient, PropertyAPI
 
 
 class AppContext:
-    def __init__(self, api: type[APIClient] = APIClient):
+    def __init__(
+            self,
+            api: type[APIClient] = APIClient,
+            property_api: type[PropertyAPI] = PropertyAPI,
+    ):
+        self.property_api = property_api()
         self.is_running = True
         self.username: str = ""
         self.api = api()
@@ -18,3 +23,7 @@ class AppContext:
     def login(self, payload: dict):
         response = self.api.login(payload=payload)
         self.username = response.json()["username"]
+
+    @property
+    def properties(self):
+        return self.property_api.list()

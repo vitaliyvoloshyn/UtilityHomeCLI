@@ -1,15 +1,16 @@
-from .auth import AuthScreen, auth_screen
-from .error import APIErrorScreen
-from .menu import MainMenuScreen
-from .menu_unauth import MenuUnauthorized, menu_unauth_screen
-from .register import RegisterScreen
+from .auth import  auth_screen
+from .error import  error_screen
+from .main_menu import  main_menu_screen
+from .menu_unauth import  menu_unauth_screen
+from .register import register_screen
+from .dev import dev_screen
 
 __all__ = [
-    "APIErrorScreen",
-    "AuthScreen",
-    "MainMenuScreen",
-    "MenuUnauthorized",
-    "RegisterScreen",
-    "auth_screen",
+    "register_screen",
     "menu_unauth_screen",
+    "main_menu_screen",
+    "dev_screen",
+    "error_screen",
+    "register_screen",
+    "auth_screen",
 ]

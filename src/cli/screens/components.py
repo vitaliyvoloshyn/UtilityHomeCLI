@@ -76,12 +76,16 @@ class InputComponent(BaseComponent):
     def __init__(self, messages: dict[str, str]):
         self.messages = messages
 
-    def parse_messages(self):
-        for message in self.messages:
-            self.__setattr__(message.keys(), message.values())
-
     def render(self):
         out_dict = self.messages.copy()
         for key, message in out_dict.items():
             out_dict[key] = inquirer.text(message=message).execute()
         return out_dict
+
+
+class TextLabel(BaseComponent):
+    def __init__(self, text: str):
+        self.text = text
+
+    def render(self):
+        console.print(f"[bold green]{self.text}[/bold green]\n")

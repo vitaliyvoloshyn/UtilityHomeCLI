@@ -16,6 +16,7 @@ class Screen:
         self.components.append(component)
 
     def show(self):
+        action: str = ""
         for c in self.components:
             action = c.render()
         return action

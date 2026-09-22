@@ -1,11 +1,16 @@
+from copy import deepcopy
+
 from ..context import AppContext
 from .base import Screen
-from .components import ChoiceMenu, InputComponent, LogoutExitMenu, MainHeader
+from .components import ChoiceMenu, InputComponent, LogoutExitMenu, MainHeader, TextLabel
 
 
 class BaseBuilder:
     def __init__(self):
         self.screen: Screen = Screen()
+
+    def reset(self):
+        self.screen = Screen()
 
     def add_main_header(self, username: str):
         self.screen.add(MainHeader(username))
@@ -16,7 +21,7 @@ class BaseBuilder:
         return self
 
     def add_choice_menu(
-        self, items: list[dict[str, str]], add_logout_exit_items: bool = True
+            self, items: list[dict[str, str]], add_logout_exit_items: bool = True
     ):
         """Приймає список типу
         [
@@ -33,9 +38,16 @@ class BaseBuilder:
         self.screen.add(InputComponent(messages))
         return self
 
+    def add_text_label(self, text: str):
+        self.screen.add(TextLabel(text))
+        return self
+
     def build(self, context: AppContext) -> Screen:
         self.screen._set_context(context)
-        return self.screen
+        screen_copy = deepcopy(self.screen)
+
+        self.reset()
+        return screen_copy
 
 
 builder = BaseBuilder()

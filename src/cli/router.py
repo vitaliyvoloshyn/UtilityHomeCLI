@@ -10,14 +10,15 @@ from .screens import *
 class Router:
     def __init__(self, context: AppContext):
         self.context = context
-        # Реєструємо екрани: ключ — назва, значення — клас екрану
+        # Реєструємо екрани: ключ — назва, значення — клас екрана
         self._screens = {
-            "auth": auth_screen,
-            # "main_menu": MainMenuScreen(self.context),
-            # "api_error": APIErrorScreen(self.context),
+            "login": auth_screen,
+            "main_menu": main_menu_screen,
+            "api_error": error_screen,
             "menu_unauth": menu_unauth_screen,
-            # "register": RegisterScreen(self.context),
-            # "data_table": DataTableScreen(self.context),
+            "register": register_screen,
+            "data_table": dev_screen,
+            "dev": dev_screen,
         }
         self.current_screen_name = "main_menu"
 

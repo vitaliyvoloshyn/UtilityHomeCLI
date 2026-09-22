@@ -1,14 +1,18 @@
-# screens/menu.py
-from InquirerPy import inquirer
-from rich.console import Console
-
-from .base import Screen
-
-console = Console()
+from .builder import builder
+from ..context import AppContext
 
 
-class APIErrorScreen(Screen):
-    def render(self) -> str:
-        console.print(f"[bold red]{self.context.error_message}[/bold red]\n")
-
-        return "exit"
+def error_screen(context: AppContext):
+    screen = (
+        builder
+        .add_main_header(context.username)
+        .add_text_label(context.error_message)
+        .add_choice_menu(
+            [
+                {"name": "Повернутися в головне меню", "value": "main_menu"},
+            ],
+        )
+        .build(context)
+    )
+    action = screen.show()
+    return action

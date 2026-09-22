@@ -10,7 +10,7 @@ from .config import (
     LOGOUT_URL,
     ME_URL,
     REGISTER_URL,
-    RESEND_VERIFICATION_URL,
+    RESEND_VERIFICATION_URL, IP_ADDRESS,
 )
 from .credentials import get_credentials, save_credentials
 
@@ -44,9 +44,9 @@ class APIClient:
         session_id, csrf_token = get_credentials()
 
         if session_id:
-            self.session.cookies.set("sessionid", session_id, domain="127.0.0.1")
+            self.session.cookies.set("sessionid", session_id, domain=IP_ADDRESS)
         if csrf_token:
-            self.session.cookies.set("csrftoken", csrf_token, domain="127.0.0.1")
+            self.session.cookies.set("csrftoken", csrf_token, domain=IP_ADDRESS)
             self.session.headers.update({"X-CSRFToken": csrf_token})
 
     def _set_csrf_header(self, token: str) -> None:
@@ -60,13 +60,13 @@ class APIClient:
         except requests.RequestException as exc:
             raise APIError("Не вдалося отримати CSRF token.") from exc
 
-        token = response.cookies.get("csrftoken", domain="127.0.0.1")
+        token = response.cookies.get("csrftoken", domain=IP_ADDRESS)
         if not token:
             raise APIError("Server did not return a CSRF token", response=response)
 
         self._set_csrf_header(token)
         save_credentials(
-            self.session.cookies.get("sessionid", domain="127.0.0.1"), token
+            self.session.cookies.get("sessionid", domain=IP_ADDRESS), token
         )
         return token
 
@@ -140,3 +140,4 @@ class APIClient:
 
     def logout(self):
         return self.request("POST", LOGOUT_URL)
+
