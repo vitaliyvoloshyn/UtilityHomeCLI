@@ -12,11 +12,11 @@ class Router:
         self.context = context
         # Реєструємо екрани: ключ — назва, значення — клас екрану
         self._screens = {
-            "auth": AuthScreen(self.context),
-            "main_menu": MainMenuScreen(self.context),
-            "api_error": APIErrorScreen(self.context),
-            "menu_unauth": MenuUnauthorized(self.context),
-            "register": RegisterScreen(self.context),
+            "auth": auth_screen,
+            # "main_menu": MainMenuScreen(self.context),
+            # "api_error": APIErrorScreen(self.context),
+            "menu_unauth": menu_unauth_screen,
+            # "register": RegisterScreen(self.context),
             # "data_table": DataTableScreen(self.context),
         }
         self.current_screen_name = "main_menu"
@@ -41,7 +41,7 @@ class Router:
             # Рендеримо екран і отримуємо назву наступного
             self.clear_console()
             try:
-                next_screen = screen.render()
+                next_screen = screen(self.context)
             except AuthError:
                 next_screen = "menu_unauth"
             except APIError as exc:

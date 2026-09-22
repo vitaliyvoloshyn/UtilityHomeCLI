@@ -3,12 +3,12 @@ from InquirerPy import inquirer
 from rich.console import Console
 
 from ...api import APIError
-from .base import BaseScreen
+from .base import Screen
 
 console = Console()
 
 
-class RegisterScreen(BaseScreen):
+class RegisterScreen(Screen):
     def render(self) -> str:
 
         # Використовуємо inquirerpy для вводу

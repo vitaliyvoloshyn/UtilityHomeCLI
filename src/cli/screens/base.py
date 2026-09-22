@@ -1,15 +1,21 @@
-from abc import ABC, abstractmethod
-
 from ..context import AppContext
+from .components import BaseComponent
 
 
-class BaseScreen(ABC):
-    def __init__(self, context: AppContext):
+class Screen:
+    def __init__(self):
+        self.context = None
+        self.components: list = []
+
+    def _set_context(self, context: AppContext):
         self.context = context
 
-    @abstractmethod
-    def render(self) -> str:
-        """
-        Малює екран за допомогою rich / inquirerpy.
-        Повертає рядок-ідентифікатор наступного екрану (наприклад, 'main_menu').
-        """
+    def add(self, component: BaseComponent):
+        if not isinstance(component, BaseComponent):
+            raise TypeError("Компонент не являється нащадком BaseComponent")
+        self.components.append(component)
+
+    def show(self):
+        for c in self.components:
+            action = c.render()
+        return action

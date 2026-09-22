@@ -3,12 +3,15 @@ from InquirerPy import inquirer
 from rich.console import Console
 
 from ...api import APIError
-from .base import BaseScreen
+from ..context import AppContext
+from .base import Screen
+from .builder import builder
+from .components import InputComponent
 
 console = Console()
 
 
-class AuthScreen(BaseScreen):
+class AuthScreen(Screen):
     def render(self) -> str:
 
         # Використовуємо inquirerpy для вводу
@@ -20,3 +23,20 @@ class AuthScreen(BaseScreen):
             print(e)
             return "auth"
         return "main_menu"
+
+
+def auth_screen(context: AppContext):
+    screen = (
+        builder.add_main_header("Не авторизований користувач")
+        .add_input_component(
+            {"email": "Введіть email: ", "password": "Введіть пароль: "}
+        )
+        .build(context)
+    )
+    user_data = screen.show()
+    try:
+        context.login(user_data)
+    except APIError as e:
+        print(e)
+        return "auth"
+    return "main_menu"

@@ -3,12 +3,14 @@ from InquirerPy import inquirer
 from rich.console import Console
 from rich.panel import Panel
 
-from .base import BaseScreen
+from ..context import AppContext
+from .base import Screen
+from .builder import builder
 
 console = Console()
 
 
-class MainMenuScreen(BaseScreen):
+class MainMenuScreen(Screen):
     def render(self) -> str:
         console.print(
             Panel("[bold cyan]🏡 Облік комунальних послуг[/bold cyan]", expand=False)
@@ -25,3 +27,18 @@ class MainMenuScreen(BaseScreen):
         ).execute()
 
         return choice  # Поверне "data_table"
+
+
+def main_menu_screen(context: AppContext):
+    screen = (
+        builder.add_main_header(context.username)
+        .add_choice_menu(
+            [
+                {"name": "Item1", "value": "test"},
+                {"name": "Item2", "value": "test"},
+            ]
+        )
+        .build()
+    )
+    action = screen.show()
+    return action

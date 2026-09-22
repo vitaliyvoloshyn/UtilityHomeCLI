@@ -2,13 +2,14 @@
 from InquirerPy import inquirer
 from rich.console import Console
 
-from ...api import APIError
-from .base import BaseScreen
+from ..context import AppContext
+from .base import Screen
+from .builder import builder
 
 console = Console()
 
 
-class MenuUnauthorized(BaseScreen):
+class MenuUnauthorized(Screen):
     def render(self) -> str:
         choice = inquirer.select(
             message="Оберіть дію:",
@@ -19,3 +20,19 @@ class MenuUnauthorized(BaseScreen):
             ],
         ).execute()
         return choice
+
+
+def menu_unauth_screen(context: AppContext):
+    screen = (
+        builder.add_main_header("не авторизований користувач")
+        .add_choice_menu(
+            [
+                {"name": "Зареєструватися", "value": "registr"},
+                {"name": "Авторизуватися", "value": "login"},
+            ],
+            False,
+        )
+        .build(context)
+    )
+    action = screen.show()
+    return action
