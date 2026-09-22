@@ -13,6 +13,7 @@ class Router:
         # Реєструємо екрани: ключ — назва, значення — клас екрану
         self._screens = {
             "auth": auth_screen,
+            "login": login_screen,
             # "main_menu": MainMenuScreen(self.context),
             # "api_error": APIErrorScreen(self.context),
             "menu_unauth": menu_unauth_screen,
