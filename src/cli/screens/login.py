@@ -1,0 +1,14 @@
+from ..context import AppContext
+from .builder import builder
+
+
+def login_screen(context: AppContext):
+    screen = (
+        builder.add_main_header("не авторизований користувач")
+        .add_input_component(
+            {"email": "Введіть email: ", "password": "Введіть пароль: "}
+        )
+        .build(context)
+    )
+    action = screen.show()
+    return action
