@@ -1,14 +1,17 @@
-from ..api import PropertyResponse
-from ..api import APIClient, PropertyAPI
+from ..api import APIClient, CategoryAPI, PropertyAPI, PropertyResponse, ProviderAPI
 
 
 class AppContext:
     def __init__(
-            self,
-            api: type[APIClient] = APIClient,
-            property_api: type[PropertyAPI] = PropertyAPI,
+        self,
+        api: type[APIClient] = APIClient,
+        property_api: type[PropertyAPI] = PropertyAPI,
+        category_api: type[CategoryAPI] = CategoryAPI,
+        provider_api: type[ProviderAPI] = ProviderAPI,
     ):
         self.property_api = property_api()
+        self.category_api = category_api()
+        self.provider_api = provider_api()
         self.is_running = True
         self.username: str = ""
         self.api = api()

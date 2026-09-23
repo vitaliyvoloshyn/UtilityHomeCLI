@@ -6,12 +6,13 @@ from .builder import builder
 def register_screen(context: AppContext):
     screen = (
         builder.add_main_header("Не авторизований користувач")
+        .add_menu_header("Меню реєстрації нового користувача")
         .add_input_component(
             {
                 "first_name": "Ваше ім'я: ",
                 "last_name": "Ваше прізвище: ",
                 "email": "Введіть email: ",
-                "password": "Введіть пароль: "
+                "password": "Введіть пароль: ",
             }
         )
         .build(context)

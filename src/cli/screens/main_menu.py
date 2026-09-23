@@ -6,16 +6,18 @@ def main_menu_screen(context: AppContext):
     properties = context.properties
     choices = []
     for property in properties:
-        choices.append({"name": f"🏠  {property.name} ({property.address})", "value": property.id})
+        choices.append(
+            {"name": f"🏠  {property.name} ({property.address})", "value": property.id}
+        )
     choices.append({"name": "Додати новий об'єкт нерухомості", "value": "add_property"})
 
     screen = (
-        builder
-        .add_main_header(context.username)
+        builder.add_main_header(context.username)
+        .add_menu_header("Головне меню")
         .add_choice_menu(
             items=choices,
             message="Оберіть об'єкт нерухомості зі списку нижче:",
-            include_back_to_main_menu=False
+            include_back_to_main_menu=False,
         )
         .build(context)
     )

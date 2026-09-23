@@ -5,6 +5,7 @@ from .builder import builder
 def menu_unauth_screen(context: AppContext):
     screen = (
         builder.add_main_header("не авторизований користувач")
+        .add_menu_header("Стартове меню")
         .add_choice_menu(
             [
                 {"name": "🔑 Авторизуватися", "value": "login"},

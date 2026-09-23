@@ -1,15 +1,13 @@
-from ...api import PropertyCreate
 from ..context import AppContext
 from .builder import builder
 
 
 def property_detail_screen(context: AppContext):
-    property = context.property_api.get(context.current_property.id)
     screen = (
-        builder
-        .add_main_header(context.username)
-        .add_text_label(f"Назва: {property.name}")
-        .add_text_label(f"Адреса: {property.address}")
+        builder.add_main_header(context.username)
+        .add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}"
+        )
         .add_choice_menu(
             [
                 {"value": "meters", "name": "📊 Лічильники"},
@@ -18,10 +16,16 @@ def property_detail_screen(context: AppContext):
                 {"value": "tariffs", "name": "💰 Тарифи"},
                 {"value": "benefits", "name": "🛡 Пільги та Субсидії"},
                 {"value": "providers", "name": "🔌 Постачальники послуг"},
-                {"value": "categories", "name": "🛠 Категорії"},
+                {"value": "category_list", "name": "📁 Категорії"},
                 {"value": "account_numbers", "name": "🔑 Особові рахунки"},
-                {"value": "edit_property", "name": "📝 Редагувати поточний об'єкт нерухомості"},
-                {"value": "delete_property", "name": "🗑️ Видалити поточний об'єкт нерухомості"},
+                {
+                    "value": "edit_property",
+                    "name": "📝 Редагувати поточний об'єкт нерухомості",
+                },
+                {
+                    "value": "delete_property",
+                    "name": "🗑️ Видалити поточний об'єкт нерухомості",
+                },
             ]
         )
         .build(context)

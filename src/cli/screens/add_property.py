@@ -5,10 +5,13 @@ from .builder import builder
 
 def add_property_screen(context: AppContext):
     screen = (
-        builder
-        .add_main_header(context.username)
+        builder.add_main_header(context.username)
+        .add_menu_header("Меню створення нового об'єкта нерухомості")
         .add_input_component(
-            {"name": "Назва об'єкта нерухомості: ", "address": "Адреса об'єкта нерухомості: "}
+            {
+                "name": "Назва об'єкта нерухомості: ",
+                "address": "Адреса об'єкта нерухомості: ",
+            }
         )
         .build(context)
     )

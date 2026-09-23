@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 
 from InquirerPy import inquirer
-from rich.box import HEAVY
+from rich.box import HEAVY, ROUNDED
 from rich.console import Console
 from rich.panel import Panel
 
@@ -16,19 +16,15 @@ class BaseComponent(ABC):
 
 
 class MenuHeaderComponent(BaseComponent):
-    def __init__(self, ):
-        ...
+    def __init__(self, title: str):
+        self.title = title
+
     def render(self):
         styled_panel = Panel(
-            f"Поточний об: {self.username}",
-            title="[bold magenta]🏡  Система обліку комунальних послуг[/bold magenta]",
-            title_align="left",
-            subtitle="Версія 1.0.0",
-            subtitle_align="right",
-            box=HEAVY,
-            border_style="yellow",
-            padding=(1, 2),  # відступи (вертикальні, горизонтальні)
-            expand=True,
+            self.title,
+            box=ROUNDED,
+            border_style="green",
+            expand=False,
         )
         console.print(styled_panel)
 
@@ -67,11 +63,11 @@ class AppHeader(BaseComponent):
 
 class ChoiceMenu(BaseComponent):
     def __init__(
-            self,
-            items: list[dict[str, str]],
-            message: str = "Оберіть дію:",
-            add_logout_exit_items: bool = True,
-            include_back_to_main_menu: bool = True
+        self,
+        items: list[dict[str, str]],
+        message: str = "Оберіть дію:",
+        add_logout_exit_items: bool = True,
+        include_back_to_main_menu: bool = True,
     ):
         self.message = message
         self.items = items

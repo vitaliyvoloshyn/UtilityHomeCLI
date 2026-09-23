@@ -1,11 +1,13 @@
-from .auth import  auth_screen
-from .error import  error_screen
-from .main_menu import  main_menu_screen
-from .menu_unauth import  menu_unauth_screen
-from .register import register_screen
-from .dev import dev_screen
+from .add_category import add_category_screen
 from .add_property import add_property_screen
+from .auth import auth_screen
+from .category_list import category_list_screen
+from .dev import dev_screen
+from .error import error_screen
+from .main_menu import main_menu_screen
+from .menu_unauth import menu_unauth_screen
 from .property_detail import property_detail_screen
+from .register import register_screen
 
 __all__ = [
     "register_screen",
@@ -17,4 +19,6 @@ __all__ = [
     "auth_screen",
     "add_property_screen",
     "property_detail_screen",
+    "category_list_screen",
+    "add_category_screen",
 ]

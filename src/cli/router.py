@@ -10,7 +10,7 @@ from .screens import *
 class Router:
     def __init__(self, context: AppContext):
         self.context = context
-        # Реєструємо екрани: ключ — назва, значення — клас екрана
+        # Реєструємо екрани: ключ — назва, значення — клфункціяас екрана
         self._screens = {
             "login": auth_screen,
             "main_menu": main_menu_screen,
@@ -21,6 +21,8 @@ class Router:
             "dev": dev_screen,
             "add_property": add_property_screen,
             "detail_property": property_detail_screen,
+            "category_list": category_list_screen,
+            "add_category": add_category_screen,
         }
         self.current_screen_name = "main_menu"
 
