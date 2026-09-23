@@ -7,10 +7,11 @@ def menu_unauth_screen(context: AppContext):
         builder.add_main_header("не авторизований користувач")
         .add_choice_menu(
             [
-                {"name": "Авторизуватися", "value": "login"},
-                {"name": "Зареєструватися", "value": "register"},
+                {"name": "🔑 Авторизуватися", "value": "login"},
+                {"name": "📝 Зареєструватися", "value": "register"},
             ],
-            False,
+            add_logout_exit_items=False,
+            include_back_to_main_menu=False,
         )
         .build(context)
     )

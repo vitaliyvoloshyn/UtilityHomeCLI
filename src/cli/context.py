@@ -1,3 +1,4 @@
+from ..api import PropertyResponse
 from ..api import APIClient, PropertyAPI
 
 
@@ -12,6 +13,7 @@ class AppContext:
         self.username: str = ""
         self.api = api()
         self.error_message: str = ""
+        self.current_property: PropertyResponse = None
 
     def logout(self):
         self.api.logout()

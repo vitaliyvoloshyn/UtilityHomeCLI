@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from ..context import AppContext
 from .base import Screen
-from .components import ChoiceMenu, InputComponent, LogoutExitMenu, MainHeader, TextLabel
+from .components import ChoiceMenu, InputComponent, AppHeader, TextLabel
 
 
 class BaseBuilder:
@@ -13,15 +13,19 @@ class BaseBuilder:
         self.screen = Screen()
 
     def add_main_header(self, username: str):
-        self.screen.add(MainHeader(username))
+        self.screen.add(AppHeader(username))
         return self
 
-    def add_logout_exit_menu(self):
-        self.screen.add(LogoutExitMenu())
-        return self
+    # def add_logout_exit_menu(self):
+    #     self.screen.add(LogoutExitMenu())
+    #     return self
 
     def add_choice_menu(
-            self, items: list[dict[str, str]], add_logout_exit_items: bool = True
+            self,
+            items: list[dict[str, str]],
+            message: str = "Оберіть дію:",
+            add_logout_exit_items: bool = True,
+            include_back_to_main_menu: bool = True
     ):
         """Приймає список типу
         [
@@ -29,7 +33,14 @@ class BaseBuilder:
             {"name": "Авторизуватися", "value": "login"},
         ]
         """
-        self.screen.add(ChoiceMenu(items, add_logout_exit_items))
+        self.screen.add(
+            ChoiceMenu(
+                items=items,
+                add_logout_exit_items=add_logout_exit_items,
+                include_back_to_main_menu=include_back_to_main_menu,
+                message=message
+            )
+        )
         return self
 
     def add_input_component(self, messages: dict[str, str]):

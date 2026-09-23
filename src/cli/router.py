@@ -19,6 +19,8 @@ class Router:
             "register": register_screen,
             "data_table": dev_screen,
             "dev": dev_screen,
+            "add_property": add_property_screen,
+            "detail_property": property_detail_screen,
         }
         self.current_screen_name = "main_menu"
 

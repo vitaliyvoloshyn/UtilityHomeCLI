@@ -7,7 +7,7 @@ def dev_screen(context: AppContext):
         builder
         .add_main_header(context.username)
         .add_text_label("Даний пункт меню знаходиться у розробці ... 🚧")
-        .add_choice_menu([{"name": "Повернутися у головне меню","value":"main_menu"}])
+        .add_choice_menu([])
         .build(context)
     )
     action = screen.show()

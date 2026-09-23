@@ -7,11 +7,7 @@ def error_screen(context: AppContext):
         builder
         .add_main_header(context.username)
         .add_text_label(context.error_message)
-        .add_choice_menu(
-            [
-                {"name": "Повернутися в головне меню", "value": "main_menu"},
-            ],
-        )
+        .add_choice_menu([])
         .build(context)
     )
     action = screen.show()
