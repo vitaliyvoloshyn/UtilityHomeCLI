@@ -16,7 +16,7 @@ class AppContext:
         self.username: str = ""
         self.api = api()
         self.error_message: str = ""
-        self.current_property: PropertyResponse = None
+        self.current_property: PropertyResponse | None = None
 
     def logout(self):
         self.api.logout()

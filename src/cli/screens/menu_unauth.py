@@ -1,8 +1,10 @@
+from typing import Any
+
 from ..context import AppContext
 from .builder import builder
 
 
-def menu_unauth_screen(context: AppContext):
+def menu_unauth_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]]:
     screen = (
         builder.add_main_header("не авторизований користувач")
         .add_menu_header("Стартове меню")
@@ -17,4 +19,4 @@ def menu_unauth_screen(context: AppContext):
         .build(context)
     )
     action = screen.show()
-    return action
+    return action, {}

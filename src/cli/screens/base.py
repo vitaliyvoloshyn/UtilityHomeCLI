@@ -1,8 +1,10 @@
+from typing import Any
+
 from ..context import AppContext
 from .components import BaseComponent
 
 
-class Screen:
+class Screen[T: (str, dict[str, Any])]:
     def __init__(self):
         self.context = None
         self.components: list = []
@@ -15,8 +17,8 @@ class Screen:
             raise TypeError("Компонент не являється нащадком BaseComponent")
         self.components.append(component)
 
-    def show(self):
-        action: str = ""
+    def show(self) -> T:
+        action: Any = ""
         for c in self.components:
             action = c.render()
         return action

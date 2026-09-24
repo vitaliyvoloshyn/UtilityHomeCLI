@@ -3,6 +3,8 @@ import os
 from ..api import APIError, AuthError
 from .context import AppContext
 from .screens import *
+from .screens.category import add_category_screen, category_list_screen
+from .screens.property import add_property_screen, property_detail_screen
 
 # Сюди ж імпортуєте інші екрани, наприклад, DataTableScreen
 
@@ -27,6 +29,7 @@ class Router:
         self.current_screen_name = "main_menu"
 
     def run(self):
+        params: dict = {}
         try:
             self.context.connect_to_server()
         except AuthError:
@@ -46,14 +49,19 @@ class Router:
             # Рендеримо екран і отримуємо назву наступного
             self.clear_console()
             try:
-                next_screen = screen(self.context)
+                next_screen, kwargs = screen(self.context, **params)
+                params = kwargs
             except AuthError:
                 next_screen = "menu_unauth"
             except APIError as exc:
                 self.context.error_message = str(exc)
                 next_screen = "api_error"
 
+            if next_screen == "main_menu":
+                self.context.current_property = None
+
             if next_screen == "logout":
+                self.context.current_property = None
                 self.context.logout()
                 next_screen = "menu_unauth"
 
@@ -64,5 +72,5 @@ class Router:
             self.current_screen_name = next_screen
 
     def clear_console(self):
-        # os.system("cls" if os.name == "nt" else "clear")
-        ...
+        os.system("cls" if os.name == "nt" else "clear")
+        # ...

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from datetime import date
 
-from .base_model import APIModel
 from pydantic import Field
+
+from .base_model import APIModel
 
 
 class PropertyCreate(APIModel):

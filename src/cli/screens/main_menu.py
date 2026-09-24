@@ -1,8 +1,10 @@
+from typing import Any
+
 from ..context import AppContext
 from .builder import builder
 
 
-def main_menu_screen(context: AppContext):
+def main_menu_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]]:
     properties = context.properties
     choices = []
     for property in properties:
@@ -23,6 +25,6 @@ def main_menu_screen(context: AppContext):
     )
     res = screen.show()
     if isinstance(res, str):
-        return res
+        return res, {}
     context.current_property = next(filter(lambda prop: prop.id == res, properties))
-    return "detail_property"
+    return "detail_property", {}

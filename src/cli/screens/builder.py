@@ -26,10 +26,6 @@ class BaseBuilder:
         self.screen.add(MenuHeaderComponent(title))
         return self
 
-    # def add_logout_exit_menu(self):
-    #     self.screen.add(LogoutExitMenu())
-    #     return self
-
     def add_choice_menu(
         self,
         items: list[dict[str, str]],
