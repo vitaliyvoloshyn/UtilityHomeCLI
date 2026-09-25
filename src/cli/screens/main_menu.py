@@ -1,7 +1,5 @@
 from typing import Any
 
-from loguru import logger
-
 from ..context import AppContext
 from .builder import builder
 
