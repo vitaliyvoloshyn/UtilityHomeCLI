@@ -54,7 +54,7 @@ class AppHeader(BaseComponent[None]):
 class ChoiceMenu(BaseComponent[str]):
     def __init__(
         self,
-        items: list[dict[str, str]],
+        items: list[dict[str, Any]],
         message: str = "Оберіть дію:",
         add_logout_exit_items: bool = True,
         include_back_to_main_menu: bool = True,
@@ -69,10 +69,16 @@ class ChoiceMenu(BaseComponent[str]):
         if self.add_logout_exit_items:
             final_choices.extend(
                 [
-                    {"name": "↩️ Повернутися у попереднє меню", "value": "prev_menu"},
-                    {"name": "🔙 Повернутися у головне меню", "value": "main_menu"},
-                    {"name": "🚪 Вийти з акаунту", "value": "logout"},
-                    {"name": "❌ Закрити програму", "value": "exit"},
+                    {
+                        "name": "↩️ Повернутися у попереднє меню",
+                        "value": {"action": "prev_menu"},
+                    },
+                    {
+                        "name": "🔙 Повернутися у головне меню",
+                        "value": {"action": "main_menu"},
+                    },
+                    {"name": "🚪 Вийти з акаунту", "value": {"action": "logout"}},
+                    {"name": "❌ Закрити програму", "value": {"action": "exit"}},
                 ]
             )
         choice = ListPrompt(
@@ -83,14 +89,14 @@ class ChoiceMenu(BaseComponent[str]):
 
 
 class InputComponent(BaseComponent[dict]):
-    def __init__(self, messages: dict[str, str]):
+    def __init__(self, messages: dict[str, Any]):
         self.messages = messages
 
     def render(self) -> dict:
         out_dict = self.messages.copy()
         for key, message in out_dict.items():
             out_dict[key] = InputPrompt(message=message).execute()
-        return out_dict
+        return {"payload": out_dict}
 
 
 class TextLabel(BaseComponent[None]):

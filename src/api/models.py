@@ -70,8 +70,9 @@ class AccountNumberUpdate(APIModel):
     account_number: str | None = Field(default=None, max_length=50)
 
 
-class AccountNumberResponse(AccountNumberCreate):
+class AccountNumberResponse(APIModel):
     id: int
+    account_number: str
     created_at: date
     property_details: PropertyResponse
     provider_details: ProviderResponse

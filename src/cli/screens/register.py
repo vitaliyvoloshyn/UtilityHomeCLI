@@ -7,7 +7,7 @@ from .builder import builder
 
 
 def register_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]]:
-    screen: Screen[dict[str, Any]] = (
+    screen: Screen = (
         builder.add_main_header("Не авторизований користувач")
         .add_menu_header("Меню реєстрації нового користувача")
         .add_input_component(

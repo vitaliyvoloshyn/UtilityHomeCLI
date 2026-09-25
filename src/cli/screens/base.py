@@ -1,10 +1,10 @@
-from typing import Any
+from loguru import logger
 
 from ..context import AppContext
 from .components import BaseComponent
 
 
-class Screen[T: (str, dict[str, Any])]:
+class Screen:
     def __init__(self):
         self.context = None
         self.components: list = []
@@ -17,8 +17,11 @@ class Screen[T: (str, dict[str, Any])]:
             raise TypeError("Компонент не являється нащадком BaseComponent")
         self.components.append(component)
 
-    def show(self) -> T:
-        action: Any = ""
+    def show(self) -> dict:
+        out_dict: dict = {}
         for c in self.components:
-            action = c.render()
-        return action
+            res = c.render()
+            if res:
+                out_dict.update(res)
+        logger.debug(out_dict)
+        return out_dict

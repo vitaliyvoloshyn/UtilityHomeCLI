@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Any
 
 from ..context import AppContext
 from .base import Screen
@@ -28,7 +29,7 @@ class BaseBuilder:
 
     def add_choice_menu(
         self,
-        items: list[dict[str, str]],
+        items: list[dict[str, Any]],
         message: str = "Оберіть дію:",
         add_logout_exit_items: bool = True,
         include_back_to_main_menu: bool = True,

@@ -1,4 +1,4 @@
-import os
+from loguru import logger
 
 from ..api import APIError, AuthError
 from .context import AppContext
@@ -25,6 +25,10 @@ class Router:
             "detail_property": property_detail_screen,
             "category_list": category_list_screen,
             "add_category": add_category_screen,
+            "provider_list": provider_list_screen,
+            "provider_add": provider_add_screen,
+            "account_number_list": account_number_list_screen,
+            "account_number_add": account_number_add_screen,
         }
         self.current_screen_name = "main_menu"
 
@@ -50,6 +54,8 @@ class Router:
             self.clear_console()
             try:
                 next_screen, kwargs = screen(self.context, **params)
+                logger.debug(f"next_screen = {next_screen}")
+                logger.debug(f"kwargs = {kwargs}")
                 params = kwargs
             except AuthError:
                 next_screen = "menu_unauth"
@@ -72,5 +78,5 @@ class Router:
             self.current_screen_name = next_screen
 
     def clear_console(self):
-        os.system("cls" if os.name == "nt" else "clear")
-        # ...
+        # os.system("cls" if os.name == "nt" else "clear")
+        ...

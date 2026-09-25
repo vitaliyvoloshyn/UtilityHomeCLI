@@ -12,4 +12,4 @@ def dev_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]]:
         .build(context)
     )
     action = screen.show()
-    return action, {}
+    return "main_menu", {}

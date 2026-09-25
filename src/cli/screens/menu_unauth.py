@@ -18,5 +18,9 @@ def menu_unauth_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, An
         )
         .build(context)
     )
-    action = screen.show()
-    return action, {}
+    res = screen.show()
+    action = res.get("screen")
+    if action is None:
+        raise ValueError("action не знайдено")
+    params = res.get("params") or {}
+    return action, params

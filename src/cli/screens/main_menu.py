@@ -1,5 +1,7 @@
 from typing import Any
 
+from loguru import logger
+
 from ..context import AppContext
 from .builder import builder
 
@@ -9,9 +11,17 @@ def main_menu_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]
     choices = []
     for property in properties:
         choices.append(
-            {"name": f"🏠  {property.name} ({property.address})", "value": property.id}
+            {
+                "name": f"🏠  {property.name} ({property.address})",
+                "value": {"action": "detail_property", "params": f"{property.id}"},
+            }
         )
-    choices.append({"name": "Додати новий об'єкт нерухомості", "value": "add_property"})
+    choices.append(
+        {
+            "name": "➕ Додати новий об'єкт нерухомості",
+            "value": {"action": "add_property"},
+        }
+    )
 
     screen = (
         builder.add_main_header(context.username)
@@ -24,7 +34,12 @@ def main_menu_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]
         .build(context)
     )
     res = screen.show()
-    if isinstance(res, str):
-        return res, {}
-    context.current_property = next(filter(lambda prop: prop.id == res, properties))
-    return "detail_property", {}
+    action = res.get("action")
+    if not action:
+        raise ValueError("Не вдалося отримати об'єкт action")
+    property_id = res.get("params")
+    if property_id:
+        context.current_property = next(
+            filter(lambda prop: prop.id == int(property_id), properties)
+        )
+    return action, {}

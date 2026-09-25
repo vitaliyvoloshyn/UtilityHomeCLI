@@ -1,4 +1,11 @@
-from ..api import APIClient, CategoryAPI, PropertyAPI, PropertyResponse, ProviderAPI
+from ..api import (
+    AccountNumberAPI,
+    APIClient,
+    CategoryAPI,
+    PropertyAPI,
+    PropertyResponse,
+    ProviderAPI,
+)
 
 
 class AppContext:
@@ -8,10 +15,12 @@ class AppContext:
         property_api: type[PropertyAPI] = PropertyAPI,
         category_api: type[CategoryAPI] = CategoryAPI,
         provider_api: type[ProviderAPI] = ProviderAPI,
+        account_number_api: type[AccountNumberAPI] = AccountNumberAPI,
     ):
         self.property_api = property_api()
         self.category_api = category_api()
         self.provider_api = provider_api()
+        self.account_number_api = account_number_api()
         self.is_running = True
         self.username: str = ""
         self.api = api()

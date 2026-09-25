@@ -14,8 +14,15 @@ def category_list_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, 
     categories = context.category_api.list()
     choices = []
     for category in categories:
-        choices.append({"value": category.id, "name": f"📁 {category.name}"})
-    choices.append({"value": "add_category", "name": "➕ Створити нову категорію"})
+        choices.append(
+            {
+                "value": {"action": "category_detail", "params": category.id},
+                "name": f"📁 {category.name}",
+            }
+        )
+    choices.append(
+        {"value": {"action": "add_category"}, "name": "➕ Створити нову категорію"}
+    )
     screen = (
         builder.add_main_header(context.username)
         .add_menu_header(
@@ -25,7 +32,11 @@ def category_list_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, 
         .build(context)
     )
     data = screen.show()
-    return data, {}
+    action = data.get("action")
+    if not action:
+        raise ValueError("No action")
+    params = data.get("params") or {}
+    return action, params
 
 
 def add_category_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]]:
@@ -41,6 +52,9 @@ def add_category_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, A
         .build(context)
     )
     data = screen.show()
-    category_create_dto = CategoryCreate.model_validate(data)
+    payload = data.get("payload")
+    if not payload:
+        raise ValueError("No payload")
+    category_create_dto = CategoryCreate.model_validate(payload)
     context.category_api.create(category_create_dto)
     return "category_list", {}

@@ -11,5 +11,4 @@ def error_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]]:
         .add_choice_menu([])
         .build(context)
     )
-    action = screen.show()
-    return action, {}
+    return "main_menu", {}
