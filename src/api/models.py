@@ -32,26 +32,27 @@ class ProviderCreate(APIModel):
     name: str = Field(..., max_length=255)
     edrpou: str | None = Field(default=None, max_length=10)
     contact_info: str | None = None
+    category: int
 
 
 class ProviderUpdate(APIModel):
     name: str | None = Field(default=None, max_length=255)
     edrpou: str | None = Field(default=None, max_length=10)
     contact_info: str | None = None
+    category: int | None = None
 
 
 class ProviderResponse(ProviderCreate):
     id: int
+    category_details: CategoryResponse
 
 
 class CategoryCreate(APIModel):
     name: str = Field(..., max_length=100)
-    unit_of_measure: str | None = Field(default=None, max_length=20)
 
 
 class CategoryUpdate(APIModel):
     name: str | None = Field(default=None, max_length=100)
-    unit_of_measure: str | None = Field(default=None, max_length=20)
 
 
 class CategoryResponse(CategoryCreate):

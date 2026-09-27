@@ -24,17 +24,13 @@ class ChargeType(StrEnum):
 class MeterCreate(APIModel):
     account: int
     category: int
-    serial_number: str = Field(..., max_length=100)
-    installation_date: date | None = None
-    sealed_date: date | None = None
+    unit_of_measure: str | None = Field(default=None, max_length=20)
 
 
 class MeterUpdate(APIModel):
     account: int | None = None
     category: int | None = None
-    serial_number: str | None = Field(default=None, max_length=100)
-    installation_date: date | None = None
-    sealed_date: date | None = None
+    unit_of_measure: str | None = Field(default=None, max_length=20)
 
 
 class MeterResponse(MeterCreate):
@@ -63,20 +59,19 @@ class MeterReadingResponse(MeterReadingCreate):
 
 class TariffCreate(APIModel):
     provider: int
-    category: int
     name: str = Field(..., max_length=150)
     charge_type: ChargeType
     price_per_unit: Decimal = Field(..., max_digits=10, decimal_places=4)
     effective_from: date
-    effective_to: date | None = None
 
 
 class TariffUpdate(APIModel):
     provider: int | None = None
-    category: int | None = None
     name: str | None = Field(default=None, max_length=150)
     charge_type: ChargeType | None = None
-    price_per_unit: Decimal | None = Field(default=None, max_digits=10, decimal_places=4)
+    price_per_unit: Decimal | None = Field(
+        default=None, max_digits=10, decimal_places=4
+    )
     effective_from: date | None = None
     effective_to: date | None = None
 
@@ -100,7 +95,9 @@ class BenefitUpdate(APIModel):
     account: int | None = None
     name: str | None = Field(default=None, max_length=150)
     benefit_type: BenefitType | None = None
-    discount_value: Decimal | None = Field(default=None, max_digits=10, decimal_places=2)
+    discount_value: Decimal | None = Field(
+        default=None, max_digits=10, decimal_places=2
+    )
     effective_from: date | None = None
     effective_to: date | None = None
     is_active: bool | None = None

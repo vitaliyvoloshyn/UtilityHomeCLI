@@ -46,7 +46,6 @@ def add_category_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, A
         .add_input_component(
             {
                 "name": "Назва нової категорії: ",
-                "unit_of_measure": "Одиниця вимірювання: ",
             }
         )
         .build(context)
