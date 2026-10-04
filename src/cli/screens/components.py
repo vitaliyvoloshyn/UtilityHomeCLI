@@ -7,6 +7,10 @@ from InquirerPy.prompts.list import ListPrompt
 from rich.box import HEAVY, ROUNDED
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+
+from ...api.models import AccountNumberResponse
 
 console = Console()
 
@@ -105,3 +109,65 @@ class TextLabel(BaseComponent[None]):
 
     def render(self) -> None:
         console.print(f"[bold green]{self.text}[/bold green]\n")
+
+
+class TableAccountsList(BaseComponent[None]):
+    def __init__(self, data: list[AccountNumberResponse]) -> None:
+        self.data = data
+
+    def total_balance(self) -> float:
+        return sum(item.balance for item in self.data if item.balance < 0)
+
+    def render(self) -> None:
+        total_balance = self.total_balance()
+
+        total_str = f"{total_balance:,.2f} грн".replace(",", " ")
+
+        if total_balance < 0:
+            total_text = Text(
+                total_str, style="bold red on #2d1315"
+            )  # Бордовий фон для ефекту "ВАУ" при боргу
+        else:
+            total_text = Text(
+                f"+{total_str}", style="bold green on #132d15"
+            )  # Темно-зелений фон для переплати
+
+        # 2. Створюємо таблицю з увімкненим футером (show_footer=True)
+        table = Table(
+            title="📊 Стан Особових Рахунків",
+            box=ROUNDED,
+            border_style="bright_blue",
+            header_style="bold cyan on #1a1a2e",
+            show_footer=True,
+            footer_style="bold",
+        )
+
+        # Додаємо колонки та передаємо підписи для нижньої панелі (футера)
+        table.add_column("Особовий рахунок", justify="left")
+        table.add_column(
+            "Постачальник послуг",
+            justify="left",
+            style="bold white",
+            footer=Text("Всього до сплати:", style="bold italic white"),
+        )
+        table.add_column("ПОТОЧНИЙ БАЛАНС", justify="right", footer=total_text)
+
+        # 3. Заповнюємо таблицю даними
+        for item in self.data:
+            balance_str = f"{item.balance:,.2f} грн".replace(",", " ")
+
+            if item.balance < 0:
+                balance_style = "bold red"
+            else:
+                balance_style = "bold green"
+                balance_str = f"+{balance_str}"
+
+            balance_text = Text(balance_str, style=balance_style)
+            table.add_row(
+                item.account_number,
+                f"{item.provider_details.name} ({item.provider_details.category_details.name})",
+                balance_text,
+            )
+
+        # Виведення таблиці в консоль
+        console.print(table)

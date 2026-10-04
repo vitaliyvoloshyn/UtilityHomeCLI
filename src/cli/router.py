@@ -29,6 +29,8 @@ class Router:
             "provider_add": provider_add_screen,
             "account_number_list": account_number_list_screen,
             "account_number_add": account_number_add_screen,
+            "meter_list": meter_list_screen,
+            "tariff_list": tariff_list_screen,
         }
         self.current_screen_name = "main_menu"
 

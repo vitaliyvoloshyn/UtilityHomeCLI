@@ -2,9 +2,11 @@ from ..api import (
     AccountNumberAPI,
     APIClient,
     CategoryAPI,
+    MeterAPI,
     PropertyAPI,
     PropertyResponse,
     ProviderAPI,
+    TariffAPI,
 )
 
 
@@ -15,12 +17,16 @@ class AppContext:
         property_api: type[PropertyAPI] = PropertyAPI,
         category_api: type[CategoryAPI] = CategoryAPI,
         provider_api: type[ProviderAPI] = ProviderAPI,
+        meter_api: type[MeterAPI] = MeterAPI,
         account_number_api: type[AccountNumberAPI] = AccountNumberAPI,
+        tariff_api: type[TariffAPI] = TariffAPI,
     ):
         self.property_api = property_api()
         self.category_api = category_api()
         self.provider_api = provider_api()
         self.account_number_api = account_number_api()
+        self.meter_api = meter_api()
+        self.tariff_api = tariff_api()
         self.is_running = True
         self.username: str = ""
         self.api = api()

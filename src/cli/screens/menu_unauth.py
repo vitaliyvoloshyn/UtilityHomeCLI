@@ -10,7 +10,7 @@ def menu_unauth_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, An
         .add_menu_header("Стартове меню")
         .add_choice_menu(
             [
-                {"name": "🔑 Авторизуватися", "value": "login"},
+                {"name": "🔑 Авторизуватися", "value": {"action": "login"}},
                 {"name": "📝 Зареєструватися", "value": "register"},
             ],
             add_logout_exit_items=False,
@@ -19,7 +19,7 @@ def menu_unauth_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, An
         .build(context)
     )
     res = screen.show()
-    action = res.get("screen")
+    action = res.get("action")
     if action is None:
         raise ValueError("action не знайдено")
     params = res.get("params") or {}

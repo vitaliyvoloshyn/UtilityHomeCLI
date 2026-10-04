@@ -3,14 +3,16 @@ from __future__ import annotations
 from typing import Any
 
 import requests
+from loguru import logger
 
 from .config import (
     CSRF_URL,
+    IP_ADDRESS,
     LOGIN_URL,
     LOGOUT_URL,
     ME_URL,
     REGISTER_URL,
-    RESEND_VERIFICATION_URL, IP_ADDRESS,
+    RESEND_VERIFICATION_URL,
 )
 from .credentials import get_credentials, save_credentials
 
@@ -123,6 +125,8 @@ class APIClient:
 
     def login(self, payload: dict[str, Any]) -> requests.Response:
         """Виконати логін та зберегти отримані credentials."""
+        payload = payload.get("payload")
+        logger.debug(payload)
         response = self.request("POST", LOGIN_URL, json=payload)
         save_credentials(
             self.session.cookies.get("sessionid"),
@@ -140,4 +144,3 @@ class APIClient:
 
     def logout(self):
         return self.request("POST", LOGOUT_URL)
-

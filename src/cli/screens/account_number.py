@@ -14,7 +14,9 @@ def account_number_list_screen(
         input("Для повернення в головне меню натисніть Enter ...")
         return "main_menu", {}
 
-    account_numbers = context.account_number_api.list()
+    account_numbers = context.account_number_api.list_by_property(
+        context.current_property.id
+    )
     choices = []
     for account_number in account_numbers:
         choices.append(
@@ -37,6 +39,7 @@ def account_number_list_screen(
         .add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
         )
+        .add_table(account_numbers)
         .add_choice_menu(choices, message="Список особових рахунків:")
         .build(context)
     )
@@ -97,3 +100,26 @@ def account_number_add_screen(
     account_number_create_dto = AccountNumberCreate.model_validate(payload)
     context.account_number_api.create(account_number_create_dto)
     return action, {}
+
+
+def account_detail(context: AppContext, **kwargs) -> tuple[str, dict[str, Any]]:
+
+    if not context.current_property:
+        input("Помилка контексту - не знайдений поточний об'єкт нерухомості")
+        input("Для повернення в головне меню натисніть Enter ...")
+        return "main_menu", {}
+
+    screen: Screen = (
+        builder.add_main_header(context.username)
+        .add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}"
+        )
+        .build(context)
+    )
+
+    data = screen.show()
+    action = data.get("action")
+    if not action:
+        raise ValueError("No action")
+    params = data.get("params") or {}
+    return action, params

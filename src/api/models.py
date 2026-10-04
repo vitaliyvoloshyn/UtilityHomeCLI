@@ -75,6 +75,7 @@ class AccountNumberResponse(APIModel):
     id: int
     account_number: str
     created_at: date
+    balance: float
     property_details: PropertyResponse
     provider_details: ProviderResponse
 

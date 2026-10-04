@@ -29,6 +29,17 @@ class BaseResourceAPI(Generic[CreateModelT, UpdateModelT, ResponseModelT]):
             )
         return [self.response_model.model_validate(item) for item in data]
 
+    def list_by_property(self, property_id: int) -> list[ResponseModelT]:
+        response = self.client.request(
+            "GET", f"{self.endpoint}?property_id={property_id}"
+        )
+        data = response.json()
+        if not isinstance(data, list):
+            raise TypeError(
+                f"Expected a list from {self.endpoint}, got {type(data).__name__}"
+            )
+        return [self.response_model.model_validate(item) for item in data]
+
     def get(self, resource_id: int) -> ResponseModelT:
         response = self.client.request("GET", self._resource_url(resource_id))
         return self.response_model.model_validate(response.json())

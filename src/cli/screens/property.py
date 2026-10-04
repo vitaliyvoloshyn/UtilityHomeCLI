@@ -44,14 +44,14 @@ def property_detail_screen(context: AppContext, **kwargs) -> tuple[str, dict[str
         )
         .add_choice_menu(
             [
-                {"value": {"action": "meters"}, "name": "📊 Лічильники"},
+                {"value": {"action": "meter_list"}, "name": "⏲️ Лічильники"},
                 {
-                    "value": {"action": "bills"},
+                    "value": {"action": "bill_list"},
                     "name": "📄 Рахунки на оплату комунальних послуг",
                 },
-                {"value": {"action": "payments"}, "name": "💳 Платежі"},
-                {"value": {"action": "tariffs"}, "name": "💰 Тарифи"},
-                {"value": {"action": "benefits"}, "name": "🛡 Пільги та Субсидії"},
+                {"value": {"action": "payment_list"}, "name": "💳 Платежі"},
+                {"value": {"action": "tariff_list"}, "name": "📈 Тарифи"},
+                {"value": {"action": "benefit_list"}, "name": "🛡 Пільги та Субсидії"},
                 {
                     "value": {"action": "provider_list"},
                     "name": "🌐 Постачальники послуг",

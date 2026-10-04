@@ -1,6 +1,7 @@
 from copy import deepcopy
 from typing import Any
 
+from ...api.models import AccountNumberResponse
 from ..context import AppContext
 from .base import Screen
 from .components import (
@@ -8,6 +9,7 @@ from .components import (
     ChoiceMenu,
     InputComponent,
     MenuHeaderComponent,
+    TableAccountsList,
     TextLabel,
 )
 
@@ -58,6 +60,10 @@ class BaseBuilder:
 
     def add_text_label(self, text: str):
         self.screen.add(TextLabel(text))
+        return self
+
+    def add_table(self, data: list[AccountNumberResponse]):
+        self.screen.add(TableAccountsList(data))
         return self
 
     def build(self, context: AppContext) -> Screen:

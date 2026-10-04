@@ -7,7 +7,7 @@ from enum import StrEnum
 from pydantic import Field
 
 from .base_model import APIModel
-from .models import CategoryResponse
+from .models import AccountNumberResponse, CategoryResponse
 
 
 class BenefitType(StrEnum):
@@ -22,20 +22,17 @@ class ChargeType(StrEnum):
 
 
 class MeterCreate(APIModel):
-    account: int
-    category: int
+    name: str
     unit_of_measure: str | None = Field(default=None, max_length=20)
 
 
 class MeterUpdate(APIModel):
-    account: int | None = None
-    category: int | None = None
+    name: str | None = None
     unit_of_measure: str | None = Field(default=None, max_length=20)
 
 
 class MeterResponse(MeterCreate):
     id: int
-    category_details: CategoryResponse
 
 
 class MeterReadingCreate(APIModel):
@@ -58,15 +55,16 @@ class MeterReadingResponse(MeterReadingCreate):
 
 
 class TariffCreate(APIModel):
-    provider: int
+    account: int
     name: str = Field(..., max_length=150)
     charge_type: ChargeType
     price_per_unit: Decimal = Field(..., max_digits=10, decimal_places=4)
     effective_from: date
+    effective_to: date | None = None
 
 
 class TariffUpdate(APIModel):
-    provider: int | None = None
+    account: int | None = None
     name: str | None = Field(default=None, max_length=150)
     charge_type: ChargeType | None = None
     price_per_unit: Decimal | None = Field(
@@ -76,9 +74,16 @@ class TariffUpdate(APIModel):
     effective_to: date | None = None
 
 
-class TariffResponse(TariffCreate):
+class TariffResponse(APIModel):
     id: int
     charge_type_display: str
+    account: int
+    account_details: AccountNumberResponse
+    name: str = Field(..., max_length=150)
+    charge_type: ChargeType
+    price_per_unit: Decimal = Field(..., max_digits=10, decimal_places=5)
+    effective_from: date
+    effective_to: date | None = None
 
 
 class BenefitCreate(APIModel):
