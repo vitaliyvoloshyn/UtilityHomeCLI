@@ -6,6 +6,7 @@ from ..api import (
     CategoryAPI,
     InvoiceAPI,
     MeterAPI,
+    MeterReadingAPI,
     PropertyAPI,
     PropertyResponse,
     ProviderAPI,
@@ -22,6 +23,7 @@ class AppContext:
         category_api: type[CategoryAPI] = CategoryAPI,
         provider_api: type[ProviderAPI] = ProviderAPI,
         meter_api: type[MeterAPI] = MeterAPI,
+        meter_readings_api: type[MeterReadingAPI] = MeterReadingAPI,
         account_number_api: type[AccountNumberAPI] = AccountNumberAPI,
         tariff_api: type[TariffAPI] = TariffAPI,
         invoice_api: type[InvoiceAPI] = InvoiceAPI,
@@ -31,6 +33,7 @@ class AppContext:
         self.provider_api = provider_api()
         self.account_number_api = account_number_api()
         self.meter_api = meter_api()
+        self.meter_readings_api = meter_readings_api()
         self.tariff_api = tariff_api()
         self.invoice_api = invoice_api()
         self.is_running = True

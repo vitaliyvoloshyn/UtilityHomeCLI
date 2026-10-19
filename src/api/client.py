@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 import requests
-from loguru import logger
 
 from .config import (
     CSRF_URL,
@@ -92,14 +91,11 @@ class APIClient:
 
         if csrf_required and "X-CSRFToken" not in self.session.headers:
             self.refresh_csrf()
-
+        response = requests.Response()
         try:
             response = self.session.request(
                 method, url, json=json, params=params, timeout=timeout
             )
-            logger.debug(url)
-            logger.debug(self.session.cookies)
-            logger.debug(self.session.headers)
             # Якщо отримали 403, пробуємо оновити токен ОДИН раз
             if csrf_required and response.status_code == 403 and retry_on_csrf:
                 self.refresh_csrf()
@@ -107,8 +103,6 @@ class APIClient:
                 response = self.session.request(
                     method, url, params=params, json=json, timeout=timeout
                 )
-            logger.debug(response.raw.headers)
-            logger.debug(self.session.cookies.get_dict())
             # Перевіряємо фінальний статус-код (викине HTTPError для >= 400)
             response.raise_for_status()
 

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal, DecimalTuple
+from decimal import Decimal
 from enum import StrEnum
-from types import NoneType
 
 from pydantic import Field
 
 from .base_model import APIModel
-from .models import AccountNumberResponse, CategoryResponse
+from .models import AccountNumberResponse
 
 
 class BenefitType(StrEnum):
@@ -34,6 +33,7 @@ class MeterUpdate(APIModel):
 
 class MeterResponse(MeterCreate):
     id: int
+    readings: list[MeterReadingResponse]
 
 
 class MeterReadingCreate(APIModel):
@@ -52,7 +52,7 @@ class MeterReadingUpdate(APIModel):
 
 class MeterReadingResponse(MeterReadingCreate):
     id: int
-    consumption: str
+    consumption: float
 
 
 class TariffCreate(APIModel):

@@ -7,7 +7,7 @@ from ..api import *
 from ..screen.base_screen import BaseScreen
 from ..screen.schema import ComponentDTO
 from .builder import *
-from .builder.base import BaseBuilder
+from .builder.base import BaseBuilder, InputReadingValueScreenBuilder
 from .context import AppContext
 from .screens import *
 
@@ -34,6 +34,8 @@ class Router:
             "tariff_list": TariffListScreenBuilder,
             "tariff_detail": TariffDetailScreenBuilder,
             "tariff_change": TariffChangeScreenBuilder,
+            "meter_readings_input": MeterReadingsInputScreenBuilder,
+            "input_readings_value": InputReadingValueScreenBuilder,
             "dev": dev_screen,
             "account_number_add": account_number_add_screen,
             "meter_list": meter_list_screen,
@@ -46,8 +48,8 @@ class Router:
             raise ValueError(f"Помилка: Екран {action} не знайдено.")
         return builder
 
-    def get_screen(self, builder: type[BaseBuilder], **kwargs) -> BaseScreen:
-        return builder(self.context, **kwargs).build()
+    def get_screen(self, builder: type[BaseBuilder], dto) -> BaseScreen:
+        return builder(self.context, dto).build()
 
     def run(self):
         dto = ComponentDTO()
@@ -69,7 +71,7 @@ class Router:
                 print(e)
                 break
 
-            screen: BaseScreen = self.get_screen(screen_builder, **dto.params)
+            screen: BaseScreen = self.get_screen(screen_builder, dto)
 
             # Рендеримо екран і отримуємо назву наступного
             self.clear_console()
@@ -131,6 +133,15 @@ class Router:
                         except ValueError as e:
                             next_screen = "api_error"
                             self.context.error_message = str(e)
+
+                    case "add_readings_request":
+                        data = MeterReadingCreate(
+                            meter=dto.payload.get("meter_id"),  # type: ignore
+                            reading_value=dto.payload.get("reading_value"),  # type: ignore
+                            reading_date=date.today(),
+                        )
+                        self.context.meter_readings_api.create(data)
+                        next_screen = "meter_readings_input"
 
                     case "logout":
                         self.reset_current_property()

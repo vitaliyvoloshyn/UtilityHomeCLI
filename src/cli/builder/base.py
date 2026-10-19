@@ -3,6 +3,7 @@ from typing import Any
 
 from ...api import *
 from ...screen.base_screen import BaseScreen
+from ...screen.schema import ComponentDTO
 from ...screen.screen_components import (
     AppHeader,
     ChoiceMenu,
@@ -18,7 +19,7 @@ from ..context import AppContext
 
 
 class BaseBuilder:
-    def __init__(self, context: AppContext, **kwargs):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
         self.screen: BaseScreen = BaseScreen(context)
         self.context = context
         self.base_screen()
@@ -151,8 +152,8 @@ class BaseBuilder:
 
 
 class UnauthScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         self.add_menu_header("Стартове меню")
         self.add_choice_menu(
             [
@@ -169,8 +170,8 @@ class UnauthScreenBuilder(BaseBuilder):
 
 
 class MainMenuScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         self.add_menu_header("Головне меню")
         self.add_choice_menu(
             items=self.get_choices(),
@@ -205,16 +206,16 @@ class MainMenuScreenBuilder(BaseBuilder):
 
 
 class ErrorScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         self.add_main_header(context.username or "Не авторизований користувач")
         self.add_text_label(context.error_message)
         self.add_choice_menu([])
 
 
 class LoginScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         self.add_input_component(
             {"username": "Введіть email: "},
             "login",
@@ -227,8 +228,8 @@ class LoginScreenBuilder(BaseBuilder):
 
 
 class RegisterScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         self.add_menu_header("Меню реєстрації нового користувача")
         self.add_input_component(
             {
@@ -248,8 +249,8 @@ class RegisterScreenBuilder(BaseBuilder):
 
 
 class PropertyDetailScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
@@ -259,6 +260,10 @@ class PropertyDetailScreenBuilder(BaseBuilder):
                 {
                     "value": {"action": "account_list"},
                     "name": "🔑 Особові рахунки",
+                },
+                {
+                    "value": {"action": "meter_readings_input"},
+                    "name": "⏲️ Внесення показників лічильників",
                 },
                 {"value": {"action": "meter_list"}, "name": "⏲️ Лічильники"},
                 {
@@ -286,8 +291,8 @@ class PropertyDetailScreenBuilder(BaseBuilder):
 
 
 class AccountListScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         self.accounts = self.get_accounts(context.current_property.id)
         self.add_menu_header(
@@ -324,13 +329,13 @@ class AccountListScreenBuilder(BaseBuilder):
 
 
 class AccountDetailScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
         )
-        self.add_table_invoice_list(self.get_invoices(kwargs["account_id"]))
+        self.add_table_invoice_list(self.get_invoices(dto.params.get("account_id")))  # type: ignore
         self.add_choice_menu([], message="Список особових рахунків:")
 
     def get_invoices(self, account_id: int):
@@ -341,8 +346,8 @@ class AccountDetailScreenBuilder(BaseBuilder):
 
 
 class CategoryListScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
@@ -354,8 +359,8 @@ class CategoryListScreenBuilder(BaseBuilder):
 
 
 class CategoryAddScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
@@ -366,8 +371,8 @@ class CategoryAddScreenBuilder(BaseBuilder):
 
 
 class ProviderListScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
@@ -379,8 +384,8 @@ class ProviderListScreenBuilder(BaseBuilder):
 
 
 class ProviderAddScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         categories = self.get_categories()
         choices = []
@@ -405,8 +410,8 @@ class ProviderAddScreenBuilder(BaseBuilder):
 
 
 class TariffListScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
@@ -445,9 +450,9 @@ class TariffListScreenBuilder(BaseBuilder):
 
 
 class TariffDetailScreenBuilder(BaseBuilder):
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
-        tariff_id = kwargs.get("tariff_id")
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        tariff_id = dto.params.get("tariff_id")
         assert tariff_id is not None
         assert context.current_property is not None
         self.tariff = self.get_current_teariff(tariff_id)
@@ -498,9 +503,9 @@ class TariffDetailScreenBuilder(BaseBuilder):
 class TariffChangeScreenBuilder(BaseBuilder):
     """Зміна тарифу (коли оператор змінив тариф)"""
 
-    def __init__(self, context: AppContext, **kwargs):
-        super().__init__(context)
-        tariff_id = kwargs.get("tariff_id")
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        tariff_id = dto.params.get("tariff_id")
         assert tariff_id is not None
         assert context.current_property is not None
         self.add_menu_header(
@@ -515,3 +520,59 @@ class TariffChangeScreenBuilder(BaseBuilder):
             },
             action="tariff_change_request",
         )
+
+
+class MeterReadingsInputScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[yellow]Внесення показників[/yellow]"
+        )
+        self.add_choice_menu(self.get_meter_choices())
+
+    def get_meters(self, property_id: int) -> list[MeterResponse]:
+        meters = self.context.meter_api.list(property_id=property_id)
+        return meters
+
+    def get_meter_choices(self) -> list[dict]:
+        assert self.context.current_property is not None
+        choices = []
+        meters = self.get_meters(self.context.current_property.id)
+        for meter in meters:
+            choices.append(
+                {
+                    "name": f"📁 {meter.name}",
+                    "value": {
+                        "payload": {"meter_id": meter.id},
+                        "action": "input_readings_value",
+                    },
+                }
+            )
+        return choices
+
+
+class InputReadingValueScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        self.meter_id = dto.payload.get("meter_id")
+        assert context.current_property is not None
+        assert self.meter_id is not None
+        self.current_meter = self.get_current_meter()
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[yellow]Внесення показників для {self.current_meter.name}[/yellow]",
+            params={"payload": dto.payload},
+        )
+        self.add_text_label(self.get_prev_reading())
+        self.add_input_component(
+            messages={"reading_value": "Введіть поточні показники: "},
+            action="add_readings_request",
+        )
+
+    def get_current_meter(self) -> MeterResponse:
+        return self.context.meter_api.get(self.meter_id)  # type: ignore
+
+    def get_prev_reading(self) -> str:
+        if len(self.current_meter.readings) > 0:
+            return f"Попередні показники лічильника - {self.current_meter.readings[0].reading_value:.0f} {self.current_meter.unit_of_measure} від {self.current_meter.readings[0].reading_date}"
+        return "По цьому лічильнику відсутні показники"

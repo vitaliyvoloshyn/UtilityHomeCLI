@@ -49,7 +49,7 @@ class BaseResourceAPI(Generic[CreateModelT, UpdateModelT, ResponseModelT]):
         response = self.client.request(
             "POST",
             self.endpoint,
-            json=payload.model_dump(exclude_unset=True),
+            json=payload.model_dump(exclude_unset=True, mode="json"),
         )
         return self.response_model.model_validate(response.json())
 
