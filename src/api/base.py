@@ -5,6 +5,7 @@ from typing import ClassVar, Generic, TypeVar
 from pydantic import BaseModel
 
 from .client import APIClient
+from .session import session
 
 CreateModelT = TypeVar("CreateModelT", bound=BaseModel)
 UpdateModelT = TypeVar("UpdateModelT", bound=BaseModel)
@@ -15,13 +16,13 @@ class BaseResourceAPI(Generic[CreateModelT, UpdateModelT, ResponseModelT]):
     """Універсальний CRUD-шар над APIClient."""
 
     endpoint: ClassVar[str]
-    response_model: ClassVar[type[ResponseModelT]]
+    response_model: ClassVar[type[ResponseModelT]]  # type: ignore
 
-    def __init__(self, client: APIClient = APIClient) -> None:
-        self.client = client()
+    def __init__(self, client: type[APIClient] = APIClient) -> None:
+        self.client = client(session)
 
-    def list(self) -> list[ResponseModelT]:
-        response = self.client.request("GET", self.endpoint)
+    def list(self, **params) -> list[ResponseModelT]:
+        response = self.client.request("GET", self.endpoint, **params)
         data = response.json()
         if not isinstance(data, list):
             raise TypeError(

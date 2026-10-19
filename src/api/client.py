@@ -14,7 +14,7 @@ from .config import (
     REGISTER_URL,
     RESEND_VERIFICATION_URL,
 )
-from .credentials import get_credentials, save_credentials
+from .credentials import clear_credentials, save_credentials
 
 
 class APIError(requests.HTTPError):
@@ -38,18 +38,18 @@ class APIClient:
 
     _CSRF_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
-    def __init__(self) -> None:
-        self.session = requests.Session()
-        self._load_credentials()
+    def __init__(self, session: requests.Session) -> None:
+        self.session = session
+        # self._load_credentials()
 
-    def _load_credentials(self) -> None:
-        session_id, csrf_token = get_credentials()
+    # def _load_credentials(self) -> None:
+    #     session_id, csrf_token = get_credentials()
 
-        if session_id:
-            self.session.cookies.set("sessionid", session_id, domain=IP_ADDRESS)
-        if csrf_token:
-            self.session.cookies.set("csrftoken", csrf_token, domain=IP_ADDRESS)
-            self.session.headers.update({"X-CSRFToken": csrf_token})
+    #     if session_id:
+    #         self.session.cookies.set("sessionid", session_id, domain=IP_ADDRESS)
+    #     if csrf_token:
+    #         self.session.cookies.set("csrftoken", csrf_token, domain=IP_ADDRESS)
+    #         self.session.headers.update({"X-CSRFToken": csrf_token})
 
     def _set_csrf_header(self, token: str) -> None:
         self.session.headers.update({"X-CSRFToken": token})
@@ -84,6 +84,7 @@ class APIClient:
         json: Any = None,
         retry_on_csrf: bool = True,
         timeout: float = 30.0,
+        **params,
     ) -> requests.Response:
         """Виконати HTTP-запит із централізованою CSRF-логікою."""
         method = method.upper()
@@ -93,14 +94,21 @@ class APIClient:
             self.refresh_csrf()
 
         try:
-            response = self.session.request(method, url, json=json, timeout=timeout)
-
+            response = self.session.request(
+                method, url, json=json, params=params, timeout=timeout
+            )
+            logger.debug(url)
+            logger.debug(self.session.cookies)
+            logger.debug(self.session.headers)
             # Якщо отримали 403, пробуємо оновити токен ОДИН раз
             if csrf_required and response.status_code == 403 and retry_on_csrf:
                 self.refresh_csrf()
                 # Робимо повторний запит через сесію (вже без виклику retry_on_csrf)
-                response = self.session.request(method, url, json=json, timeout=timeout)
-
+                response = self.session.request(
+                    method, url, params=params, json=json, timeout=timeout
+                )
+            logger.debug(response.raw.headers)
+            logger.debug(self.session.cookies.get_dict())
             # Перевіряємо фінальний статус-код (викине HTTPError для >= 400)
             response.raise_for_status()
 
@@ -125,8 +133,6 @@ class APIClient:
 
     def login(self, payload: dict[str, Any]) -> requests.Response:
         """Виконати логін та зберегти отримані credentials."""
-        payload = payload.get("payload")
-        logger.debug(payload)
         response = self.request("POST", LOGIN_URL, json=payload)
         save_credentials(
             self.session.cookies.get("sessionid"),
@@ -143,4 +149,6 @@ class APIClient:
         return self.request("POST", RESEND_VERIFICATION_URL, json={"email": email})
 
     def logout(self):
-        return self.request("POST", LOGOUT_URL)
+        response = self.request("POST", LOGOUT_URL)
+        clear_credentials()
+        return response

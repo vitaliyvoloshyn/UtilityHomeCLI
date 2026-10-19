@@ -2,7 +2,7 @@ APP_NAME = "UtilityHomeCLI"
 
 # Authentication endpoints are intentionally kept configurable because they are
 # not described by the supplied OpenAPI document.
-IP_ADDRESS = "192.168.0.111"
+IP_ADDRESS = "127.0.0.1"
 BASE_URL = f"http://{IP_ADDRESS}:8000/api"
 REGISTER_URL = f"{BASE_URL}/users/register/"
 LOGIN_URL = f"{BASE_URL}/users/login/"
@@ -19,3 +19,4 @@ METERS_URL = f"{BASE_URL}/meters/"
 METER_READINGS_URL = f"{BASE_URL}/readings/"
 TARIFFS_URL = f"{BASE_URL}/tariffs/"
 BENEFITS_URL = f"{BASE_URL}/benefits/"
+INVOICES_URL = f"{BASE_URL}/invoices/"

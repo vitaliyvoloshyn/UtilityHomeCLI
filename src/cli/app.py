@@ -3,9 +3,6 @@ from enum import Enum
 
 from loguru import logger
 
-from .context import AppContext
-from .router import Router
-
 
 class Levels(Enum):
     debug = "DEBUG"
@@ -17,7 +14,14 @@ class Levels(Enum):
 
 def logger_init():
     logger.remove(0)
-    logger.add(sys.stderr, level=Levels.info.value)
+    logger.add(sys.stderr, level=Levels.debug.value)
+
+
+logger_init()
+
+
+from .context import AppContext
+from .router import Router
 
 
 def main():
@@ -27,5 +31,4 @@ def main():
 
 
 if __name__ == "__main__":
-    logger_init()
     main()

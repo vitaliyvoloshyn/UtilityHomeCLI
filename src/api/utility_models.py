@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, DecimalTuple
 from enum import StrEnum
+from types import NoneType
 
 from pydantic import Field
 
@@ -58,9 +59,10 @@ class TariffCreate(APIModel):
     account: int
     name: str = Field(..., max_length=150)
     charge_type: ChargeType
-    price_per_unit: Decimal = Field(..., max_digits=10, decimal_places=4)
+    price_per_unit: Decimal = Field(..., max_digits=10, decimal_places=5)
     effective_from: date
     effective_to: date | None = None
+    meter: int | None = None
 
 
 class TariffUpdate(APIModel):
@@ -74,6 +76,12 @@ class TariffUpdate(APIModel):
     effective_to: date | None = None
 
 
+class TariffChange(APIModel):
+    tariff_id: int
+    new_price: str
+    effective_from: date
+
+
 class TariffResponse(APIModel):
     id: int
     charge_type_display: str
@@ -84,6 +92,9 @@ class TariffResponse(APIModel):
     price_per_unit: Decimal = Field(..., max_digits=10, decimal_places=5)
     effective_from: date
     effective_to: date | None = None
+    is_active: bool
+    meter: int | None = None
+    meter_details: MeterResponse | None = None
 
 
 class BenefitCreate(APIModel):
@@ -111,3 +122,39 @@ class BenefitUpdate(APIModel):
 class BenefitResponse(BenefitCreate):
     id: int
     benefit_type_display: str
+
+
+class Item(APIModel):
+    id: int
+    tariff_name: str
+    unit_of_measure: str | None
+    previous_reading: Decimal | None
+    current_reading: Decimal | None
+    consumption: Decimal | None
+    tariff_price_at_billing: Decimal = Field(decimal_places=2)
+    base_amount: Decimal = Field(decimal_places=2)
+    benefit_discount: Decimal | None
+
+
+class InvoiceResponse(APIModel):
+    id: int
+    provider_name: str
+    account_number: str
+    billing_period: date
+    billing_period_display: str
+    benefit_name: str | None
+    total_base_amount: Decimal = Field(decimal_places=2)
+    total_benefit_discount: Decimal = Field(decimal_places=2)
+    previous_balance: Decimal = Field(decimal_places=2)
+    amount_due: Decimal = Field(decimal_places=2)
+    amount_paid: Decimal = Field(decimal_places=2)
+    status: str
+    status_display: str
+    due_date: date
+    items: list[Item]
+
+
+class InvoiceUpdate(APIModel): ...
+
+
+class InvoiceCreate(APIModel): ...

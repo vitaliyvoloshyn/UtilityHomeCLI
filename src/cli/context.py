@@ -1,13 +1,17 @@
+from types import NoneType
+
 from ..api import (
     AccountNumberAPI,
     APIClient,
     CategoryAPI,
+    InvoiceAPI,
     MeterAPI,
     PropertyAPI,
     PropertyResponse,
     ProviderAPI,
     TariffAPI,
 )
+from ..api.session import session
 
 
 class AppContext:
@@ -20,6 +24,7 @@ class AppContext:
         meter_api: type[MeterAPI] = MeterAPI,
         account_number_api: type[AccountNumberAPI] = AccountNumberAPI,
         tariff_api: type[TariffAPI] = TariffAPI,
+        invoice_api: type[InvoiceAPI] = InvoiceAPI,
     ):
         self.property_api = property_api()
         self.category_api = category_api()
@@ -27,11 +32,12 @@ class AppContext:
         self.account_number_api = account_number_api()
         self.meter_api = meter_api()
         self.tariff_api = tariff_api()
+        self.invoice_api = invoice_api()
         self.is_running = True
         self.username: str = ""
-        self.api = api()
+        self.api = api(session)
         self.error_message: str = ""
-        self.current_property: PropertyResponse | None = None
+        self._current_property: PropertyResponse | None = None
 
     def logout(self):
         self.api.logout()
@@ -47,3 +53,19 @@ class AppContext:
     @property
     def properties(self):
         return self.property_api.list()
+
+    @property
+    def current_property(self) -> PropertyResponse | None:
+        return self._current_property
+
+    @current_property.setter
+    def current_property(self, property: PropertyResponse | None):
+        if not isinstance(property, (PropertyResponse, NoneType)):
+            raise TypeError(
+                "Невідповідність типів. Тип аргументу property має бути PropertyResponse"
+            )
+        self._current_property = property
+
+
+# def get_context() -> AppContext:
+#     return AppContext()

@@ -10,8 +10,8 @@ def menu_unauth_screen(context: AppContext, **kwargs) -> tuple[str, dict[str, An
         .add_menu_header("Стартове меню")
         .add_choice_menu(
             [
-                {"name": "🔑 Авторизуватися", "value": {"action": "login"}},
-                {"name": "📝 Зареєструватися", "value": "register"},
+                {"name": "🔑 Авторизуватися", "value": {"action": "login_screen"}},
+                {"name": "📝 Зареєструватися", "value": {"action": "register_screen"}},
             ],
             add_logout_exit_items=False,
             include_back_to_main_menu=False,
