@@ -12,9 +12,32 @@ from .context import AppContext
 from .screens import *
 
 
+class ScreenHistory:
+    skiped_actions = ("", "back_step", "menu_unauth")
+
+    def __init__(self):
+        logger.debug("Init class ScreenHistory")
+        self._screen_history: list[ComponentDTO] = []
+
+    def save(self, screen: ComponentDTO):
+        if screen.action in self.skiped_actions:
+            return
+        if not isinstance(screen, ComponentDTO):
+            raise TypeError("Аргумент screen не являється об'єктом класу ComponentDTO")
+        self._screen_history.append(screen)
+        logger.debug(self._screen_history)
+
+    def get(self) -> ComponentDTO:
+        if len(self._screen_history) == 0:
+            raise ValueError("Історія наразі не містить ніяких записів")
+        screen = self._screen_history.pop()
+        return screen
+
+
 class Router:
     def __init__(self, context: AppContext):
         self.context = context
+        self.history = ScreenHistory()
 
         self._builders: dict[str, type[BaseBuilder]] = {
             "login_screen": LoginScreenBuilder,
@@ -36,11 +59,9 @@ class Router:
             "input_readings_value": InputReadingValueScreenBuilder,
             "consumption_meter_list": ConsumptionMeterListScreenBuilder,
             "readings_list": ConsumpionListScreenBuilder,
-            # "dev": dev_screen,
-            # "account_number_add": account_number_add_screen,
-            # "meter_list": meter_list_screen,
         }
-        self.current_builder = "main_menu"
+
+        # self.initial_builder = "main_menu"
 
     def get_screen_builder(self, action: str) -> type[BaseBuilder]:
         builder = self._builders.get(action, None)
@@ -52,12 +73,14 @@ class Router:
         return builder(self.context, dto).build()
 
     def run(self):
-        dto = ComponentDTO()
+        initial_dto = ComponentDTO(action="main_menu")
+        cur_dto = ComponentDTO(action="main_menu")
+        prev_dto = cur_dto
         try:
             self.context.connect_to_server()
         except AuthError:
             logger.debug("auth_error")
-            self.current_builder = "menu_unauth"
+            cur_dto = ComponentDTO(action="menu_unauth")
         except APIError as exc:
             print(exc)
             self.context.is_running = False
@@ -65,28 +88,26 @@ class Router:
         while self.context.is_running:
             # Отримуємо об'єкт поточного екрану
             try:
-                screen_builder = self.get_screen_builder(self.current_builder)
-                logger.debug(screen_builder)
+                screen_builder = self.get_screen_builder(cur_dto.action)
             except ValueError as e:
                 print(e)
                 break
 
-            screen: BaseScreen = self.get_screen(screen_builder, dto)
+            screen: BaseScreen = self.get_screen(screen_builder, cur_dto)
 
             # Рендеримо екран і отримуємо назву наступного
             self.clear_console()
             try:
-                dto = screen.show()
-                logger.debug(f"dto = {dto}")
-                next_screen = dto.action
+                cur_dto = screen.show()
+                logger.debug(f"dto = {cur_dto}")
+                next_screen = cur_dto.action
 
                 match next_screen:
                     case "login":
-                        self.login(dto.payload)
                         next_screen = "main_menu"
 
                     case "register":
-                        self.register(dto.payload)
+                        self.register(cur_dto.payload)
                         print(
                             "Пройдіть верифікацію за посиланням у повідомленні у Вашій поштовій скриньці.\nПотім Ви зможете авторизуватися"
                         )
@@ -99,21 +120,21 @@ class Router:
                         self.context.current_property = next(
                             property
                             for property in self.context.properties
-                            if property.id == dto.params.get("property_id")
+                            if property.id == cur_dto.params.get("property_id")
                         )
 
                     case "category_add_request":
-                        self.add_category(dto.payload)
+                        self.add_category(cur_dto.payload)
                         next_screen = "category_list"
 
                     case "provider_add_request":
-                        self.add_provider(dto.payload)
+                        self.add_provider(cur_dto.payload)
                         next_screen = "provider_list"
 
                     case "tariff_change_request":
                         try:
-                            year = dto.payload.get("year")
-                            month = dto.payload.get("month")
+                            year = cur_dto.payload.get("year")
+                            month = cur_dto.payload.get("month")
                             if year is None and month is None:
                                 raise ValueError("Не задані рік або місяць")
                             if not isinstance(year, (int, str)) or not isinstance(
@@ -124,8 +145,8 @@ class Router:
                             month = int(month)
                             date_from = self.get_date(year, month)
                             tariff_ch_dto = TariffChange(
-                                tariff_id=dto.payload["tariff_id"],
-                                new_price=dto.payload["new_price"],
+                                tariff_id=cur_dto.payload["tariff_id"],
+                                new_price=cur_dto.payload["new_price"],
                                 effective_from=date_from,
                             )
                             self.context.tariff_api.change_tariff(tariff_ch_dto)
@@ -136,12 +157,20 @@ class Router:
 
                     case "add_readings_request":
                         data = MeterReadingCreate(
-                            meter=dto.payload.get("meter_id"),  # type: ignore
-                            reading_value=dto.payload.get("reading_value"),  # type: ignore
+                            meter=cur_dto.payload.get("meter_id"),  # type: ignore
+                            reading_value=cur_dto.payload.get("reading_value"),  # type: ignore
                             reading_date=date.today(),
                         )
                         self.context.meter_readings_api.create(data)
                         next_screen = "meter_readings_input"
+
+                    case "back_step":
+                        try:
+                            cur_dto = self.history.get()
+                        except ValueError:
+                            cur_dto = initial_dto
+                        next_screen = cur_dto.action
+                        prev_dto = ComponentDTO()
 
                     case "logout":
                         self.reset_current_property()
@@ -162,7 +191,9 @@ class Router:
             except KeyboardInterrupt:
                 next_screen = "exit"
 
-            self.current_builder = next_screen
+            # self.current_builder = next_screen
+            self.history.save(prev_dto)
+            prev_dto = cur_dto
 
     def login(self, payload: dict):
         self.context.login(payload)

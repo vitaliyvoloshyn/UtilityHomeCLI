@@ -85,7 +85,7 @@ class ChoiceMenu(BaseComponent[dict]):
             final_choices.append(
                 {
                     "name": "↩️  Повернутися у попереднє меню",
-                    "value": {"action": "prev_menu"},
+                    "value": {"action": "back_step"},
                 },
             )
 
