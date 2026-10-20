@@ -84,7 +84,7 @@ class ChoiceMenu(BaseComponent[dict]):
         if self.add_back_item:
             final_choices.append(
                 {
-                    "name": "↩️ Повернутися у попереднє меню",
+                    "name": "↩️  Повернутися у попереднє меню",
                     "value": {"action": "prev_menu"},
                 },
             )
@@ -317,35 +317,38 @@ class TableInvoiceList(BaseComponent[None]):
         return Text(status_value, style="bold green")
 
 
-class TariffDetailDTO(BaseModel):
+class DataTableDTO(BaseModel):
     """
     headers - Заголовки таблиці
     rows - рядки таблиці
     Колонки таблиці вносяться в такій послідовності: Назва тарифу, значення тарифу, тип тарифу, дата початку дії, лічильник, оператор
     """
 
+    title: str
     headers: Sequence[str]
-    row: Sequence[str]
+    rows: Sequence[Sequence[str]]
 
     @model_validator(mode="after")
-    def validate_rows_length_matches_headers(self) -> "TariffDetailDTO":
+    def validate_rows_length_matches_headers(self) -> "DataTableDTO":
 
         # Перевіряємо кожну стрічку на відповідність довжині headers
-
-        if len(self.headers) != len(self.row):
-            raise ValueError(
-                f"Невідповідність розміру: рядок з даними має довжину {len(self.row)}, "
-                f"але очікувалось {len(self.headers)} (відповідно до кількості headers)."
-            )
+        header_len = len(self.headers)
+        for index, row in enumerate(self.rows):
+            row_len = len(row)
+            if row_len != header_len:
+                raise ValueError(
+                    f"Невідповідність розміру: рядок {index} з даними має довжину {row_len}, "
+                    f"але очікувалось {header_len} (відповідно до кількості headers)."
+                )
         return self
 
 
-class TableTariffDetail(BaseComponent[None]):
-    def __init__(self, data: TariffDetailDTO) -> None:
+class CommonTable(BaseComponent[None]):
+    def __init__(self, data: DataTableDTO) -> None:
         self.data = data
 
     def render(self) -> None:
-        console.print("\n[bold blue]💵 РАХУНОК ЗА КОМУНАЛЬНІ ПОСЛУГИ[/bold blue]\n")
+        console.print(self.data.title)
 
         # --- БЛОК 2: ТАБЛИЦЯ НАРАХУВАНЬ (З РАМКАМИ) ---
         # Використовуємо коробковий стиль SQUARE та вмикаємо лінії між рядками
@@ -361,15 +364,13 @@ class TableTariffDetail(BaseComponent[None]):
         calc_table = Table(
             show_header=True, box=SQUARE, show_lines=True, border_style="gray37"
         )
-        # (calc_table.add_column(h, **row_params) for h in self.data.headers)
         for index, header in enumerate(self.data.headers):
             if index == 0:
                 calc_table.add_column(header, **row_params_1)
             else:
                 calc_table.add_column(header, **row_params)
-
-        calc_table.add_row(*self.data.row)
-        # (calc_table.add_row(r) for r in self.data.row)
+        for row in self.data.rows:
+            calc_table.add_row(*row)
 
         # --- ВИВЕДЕННЯ В КОНСОЛЬ ---
 

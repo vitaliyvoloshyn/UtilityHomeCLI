@@ -1,4 +1,5 @@
 from copy import deepcopy
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from ...api import *
@@ -7,12 +8,12 @@ from ...screen.schema import ComponentDTO
 from ...screen.screen_components import (
     AppHeader,
     ChoiceMenu,
+    CommonTable,
+    DataTableDTO,
     InputComponent,
     MenuHeaderComponent,
     TableAccountsList,
     TableInvoiceList,
-    TableTariffDetail,
-    TariffDetailDTO,
     TextLabel,
 )
 from ..context import AppContext
@@ -83,8 +84,8 @@ class BaseBuilder:
         self.screen.add(TableInvoiceList(data))
         return self
 
-    def add_table_tariff_detail(self, data: TariffDetailDTO):
-        self.screen.add(TableTariffDetail(data))
+    def add_table_tariff_detail(self, data: DataTableDTO):
+        self.screen.add(CommonTable(data))
         return self
 
     def base_screen(self):
@@ -263,16 +264,20 @@ class PropertyDetailScreenBuilder(BaseBuilder):
                 },
                 {
                     "value": {"action": "meter_readings_input"},
-                    "name": "⏲️ Внесення показників лічильників",
+                    "name": "⏲️  Внесення показників лічильників",
                 },
-                {"value": {"action": "meter_list"}, "name": "⏲️ Лічильники"},
+                {
+                    "value": {"action": "consumption_meter_list"},
+                    "name": "⏲️  Споживання",
+                },
+                {"value": {"action": "meter_list"}, "name": "⏲️  Лічильники"},
                 {
                     "value": {"action": "bill_list"},
                     "name": "📄 Рахунки на оплату комунальних послуг",
                 },
                 {"value": {"action": "payment_list"}, "name": "💳 Платежі"},
                 {"value": {"action": "tariff_list"}, "name": "📈 Тарифи"},
-                {"value": {"action": "benefit_list"}, "name": "🛡 Пільги та Субсидії"},
+                {"value": {"action": "benefit_list"}, "name": "🛡  Пільги та Субсидії"},
                 {
                     "value": {"action": "provider_list"},
                     "name": "🌐 Постачальники послуг",
@@ -284,7 +289,7 @@ class PropertyDetailScreenBuilder(BaseBuilder):
                 },
                 {
                     "value": {"action": "delete_property"},
-                    "name": "🗑️ Видалити поточний об'єкт нерухомості",
+                    "name": "🗑️  Видалити поточний об'єкт нерухомості",
                 },
             ]
         )
@@ -479,7 +484,7 @@ class TariffDetailScreenBuilder(BaseBuilder):
         cur_tariff = self.context.tariff_api.get(tariff_id)
         return cur_tariff
 
-    def get_tariff_dto(self, cur_tariff: TariffResponse) -> TariffDetailDTO:
+    def get_tariff_dto(self, cur_tariff: TariffResponse) -> DataTableDTO:
         headers = (
             "Назва",
             "Значення",
@@ -489,15 +494,18 @@ class TariffDetailScreenBuilder(BaseBuilder):
             "Оператор",
         )
         meter = cur_tariff.meter_details.name if cur_tariff.meter_details else "-"
-        row = (
-            cur_tariff.name,
-            str(f"{cur_tariff.price_per_unit:.2f}"),
-            cur_tariff.charge_type_display,
-            str(cur_tariff.effective_from),
-            meter,
-            cur_tariff.account_details.provider_details.name,
-        )
-        return TariffDetailDTO(headers=headers, row=row)
+        row = [
+            (
+                cur_tariff.name,
+                str(f"{cur_tariff.price_per_unit:.2f}"),
+                cur_tariff.charge_type_display,
+                str(cur_tariff.effective_from),
+                meter,
+                cur_tariff.account_details.provider_details.name,
+            ),
+        ]
+        title = "\n[bold blue]💵 Деталізація тарифа[/bold blue]\n"
+        return DataTableDTO(title=title, headers=headers, rows=row)
 
 
 class TariffChangeScreenBuilder(BaseBuilder):
@@ -576,3 +584,75 @@ class InputReadingValueScreenBuilder(BaseBuilder):
         if len(self.current_meter.readings) > 0:
             return f"Попередні показники лічильника - {self.current_meter.readings[0].reading_value:.0f} {self.current_meter.unit_of_measure} від {self.current_meter.readings[0].reading_date}"
         return "По цьому лічильнику відсутні показники"
+
+
+class ConsumptionMeterListScreenBuilder(BaseBuilder):
+    """Білдер екрану з переліком лічильників"""
+
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[yellow]Меню перегляду споживання[/yellow]"
+        )
+        self.add_choice_menu(self.get_meter_choices())
+
+    def get_meters(self, property_id: int) -> list[MeterResponse]:
+        meters = self.context.meter_api.list(property_id=property_id)
+        return meters
+
+    def get_meter_choices(self) -> list[dict]:
+        assert self.context.current_property is not None
+        choices = []
+        meters = self.get_meters(self.context.current_property.id)
+        for meter in meters:
+            choices.append(
+                {
+                    "name": f"📁 {meter.name}",
+                    "value": {
+                        "payload": {"meter_id": meter.id},
+                        "action": "readings_list",
+                    },
+                }
+            )
+        return choices
+
+
+class ConsumpionListScreenBuilder(BaseBuilder):
+    """Білдер екрану з переліком показників по вибраному лічильнику"""
+
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        self.meter_id = dto.payload.get("meter_id")
+        assert self.meter_id is not None
+        assert context.current_property is not None
+        self.current_meter = self.get_current_meter()
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Споживання[/cyan]"
+        )
+        self.add_table_tariff_detail(self.get_data())
+        self.add_choice_menu([])
+
+    def get_current_meter(self) -> MeterResponse:
+        return self.context.meter_api.get(self.meter_id)  # type: ignore
+
+    def get_data(self) -> DataTableDTO:
+        title = f"\n[bold blue]💵 Показники {self.current_meter.name}[/bold blue]\nОдиниці виміру: [bold blue]{self.current_meter.unit_of_measure}[/bold blue]"
+
+        header = "Показники", "Дата", "Спожито"
+
+        readings = self.current_meter.readings[::-1]
+        rows = []
+        for reading in readings:
+            row = (
+                str(reading.reading_value.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+                str(reading.reading_date),
+                str(round(reading.consumption)),
+            )
+            rows.append(row)
+        data = DataTableDTO(
+            title=title,
+            headers=header,
+            rows=rows,
+        )
+        return data

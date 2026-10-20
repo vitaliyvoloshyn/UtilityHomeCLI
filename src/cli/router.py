@@ -11,8 +11,6 @@ from .builder.base import BaseBuilder, InputReadingValueScreenBuilder
 from .context import AppContext
 from .screens import *
 
-# Сюди ж імпортуєте інші екрани, наприклад, DataTableScreen
-
 
 class Router:
     def __init__(self, context: AppContext):
@@ -36,9 +34,11 @@ class Router:
             "tariff_change": TariffChangeScreenBuilder,
             "meter_readings_input": MeterReadingsInputScreenBuilder,
             "input_readings_value": InputReadingValueScreenBuilder,
-            "dev": dev_screen,
-            "account_number_add": account_number_add_screen,
-            "meter_list": meter_list_screen,
+            "consumption_meter_list": ConsumptionMeterListScreenBuilder,
+            "readings_list": ConsumpionListScreenBuilder,
+            # "dev": dev_screen,
+            # "account_number_add": account_number_add_screen,
+            # "meter_list": meter_list_screen,
         }
         self.current_builder = "main_menu"
 
