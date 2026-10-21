@@ -1,4 +1,5 @@
 from .base import (
+    AccountAddScreenBuilder,
     AccountDetailScreenBuilder,
     AccountListScreenBuilder,
     CategoryAddScreenBuilder,
@@ -21,6 +22,7 @@ from .base import (
 )
 
 __all__ = [
+    "AccountAddScreenBuilder",
     "AccountDetailScreenBuilder",
     "AccountListScreenBuilder",
     "CategoryAddScreenBuilder",

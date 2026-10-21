@@ -330,7 +330,7 @@ class AccountListScreenBuilder(BaseBuilder):
             )
         choices.append(
             {
-                "value": {"action": "account_number_add"},
+                "value": {"action": "account_add"},
                 "name": "➕ Створити новий особовий рахунок",
             }
         )
@@ -353,6 +353,43 @@ class AccountDetailScreenBuilder(BaseBuilder):
             account_id=account_id,
             status=["unpaid", "partially_paid"],
         )
+
+
+class AccountAddScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n"
+        )
+        self.add_text_label("Створення нового особового рахунка\n")
+        self.add_text_label(
+            "Особовий рахунок буде прив'язаний до поточного об'єкта нерухомості\n"
+        )
+        self.add_input_component(
+            messages={"account_number": "Введіть номер особового рахунка: "},
+            action="account_add_request",
+        )
+        self.add_choice_menu(
+            self.get_provider_choice(),
+            "Оберіть постачальника послуг: ",
+            False,
+            False,
+            False,
+            False,
+        )
+
+    def get_provider_choice(self) -> list[dict]:
+        providers = self.get_providers()
+        choices = []
+        for provider in providers:
+            choices.append(
+                {
+                    "name": f"📁 {provider.name}",
+                    "value": {"payload": {"provider": provider.id}},
+                }
+            )
+        return choices
 
 
 class CategoryListScreenBuilder(BaseBuilder):

@@ -47,6 +47,7 @@ class Router:
             "property_detail": PropertyDetailScreenBuilder,
             "account_list": AccountListScreenBuilder,
             "account_detail": AccountDetailScreenBuilder,
+            "account_add": AccountAddScreenBuilder,
             "category_list": CategoryListScreenBuilder,
             "category_add": CategoryAddScreenBuilder,
             "provider_list": ProviderListScreenBuilder,
@@ -104,7 +105,7 @@ class Router:
 
                 match next_screen:
                     case "login":
-                        next_screen = "main_menu"
+                        cur_dto.action = "main_menu"
 
                     case "register":
                         self.register(cur_dto.payload)
@@ -125,11 +126,11 @@ class Router:
 
                     case "category_add_request":
                         self.add_category(cur_dto.payload)
-                        next_screen = "category_list"
+                        cur_dto.action = "category_list"
 
                     case "provider_add_request":
                         self.add_provider(cur_dto.payload)
-                        next_screen = "provider_list"
+                        cur_dto.action = "provider_list"
 
                     case "tariff_change_request":
                         try:
@@ -150,9 +151,9 @@ class Router:
                                 effective_from=date_from,
                             )
                             self.context.tariff_api.change_tariff(tariff_ch_dto)
-                            next_screen = "tariff_list"
+                            cur_dto.action = "tariff_list"
                         except ValueError as e:
-                            next_screen = "api_error"
+                            cur_dto.action = "api_error"
                             self.context.error_message = str(e)
 
                     case "add_readings_request":
@@ -162,26 +163,33 @@ class Router:
                             reading_date=date.today(),
                         )
                         self.context.meter_readings_api.create(data)
-                        next_screen = "meter_readings_input"
+                        cur_dto.action = "meter_readings_input"
 
                     case "tariff_add_request":
                         self.context.tariff_api.create(
                             TariffCreate.model_validate(cur_dto.payload)
                         )
-                        next_screen = "tariff_list"
+                        cur_dto.action = "tariff_list"
+
+                    case "account_add_request":
+                        cur_dto.payload["property"] = self.context.current_property.id  # type: ignore
+                        self.context.account_number_api.create(
+                            AccountNumberCreate.model_validate(cur_dto.payload)
+                        )
+                        cur_dto.action = "account_list"
 
                     case "back_step":
                         try:
                             cur_dto = self.history.get()
                         except ValueError:
                             cur_dto = initial_dto
-                        next_screen = cur_dto.action
+                        cur_dto.action = cur_dto.action
                         prev_dto = ComponentDTO()
 
                     case "logout":
                         self.reset_current_property()
                         self.context.logout()
-                        next_screen = "menu_unauth"
+                        cur_dto.action = "menu_unauth"
 
                     case "exit":
                         self.context.is_running = False
@@ -190,12 +198,12 @@ class Router:
             except AuthError as e:
                 print(e)
                 self.input_continue()
-                next_screen = "menu_unauth"
+                cur_dto.action = "menu_unauth"
             except APIError as exc:
                 self.context.error_message = str(exc)
-                next_screen = "api_error"
+                cur_dto.action = "api_error"
             except KeyboardInterrupt:
-                next_screen = "exit"
+                cur_dto.action = "exit"
 
             # self.current_builder = next_screen
             self.history.save(prev_dto)
