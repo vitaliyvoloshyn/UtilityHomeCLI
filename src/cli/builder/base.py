@@ -184,6 +184,7 @@ class MainMenuScreenBuilder(BaseBuilder):
 
         choices: list = []
         properties = self.context.properties
+        properties = properties[::-1]
 
         for property in properties:
             choices.append(

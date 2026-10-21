@@ -9,7 +9,6 @@ from ..screen.schema import ComponentDTO
 from .builder import *
 from .builder.base import BaseBuilder, InputReadingValueScreenBuilder
 from .context import AppContext
-from .screens import *
 
 
 class ScreenHistory:
@@ -205,8 +204,7 @@ class Router:
         self.context.current_property = None
 
     def clear_console(self):
-        # os.system("cls" if os.name == "nt" else "clear")
-        ...
+        os.system("cls" if os.name == "nt" else "clear")
 
     @staticmethod
     def input_continue():
