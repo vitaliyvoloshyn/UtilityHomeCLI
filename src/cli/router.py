@@ -54,6 +54,7 @@ class Router:
             "tariff_list": TariffListScreenBuilder,
             "tariff_detail": TariffDetailScreenBuilder,
             "tariff_change": TariffChangeScreenBuilder,
+            "tariff_add": TariffAddScreenBuilder,
             "meter_readings_input": MeterReadingsInputScreenBuilder,
             "input_readings_value": InputReadingValueScreenBuilder,
             "consumption_meter_list": ConsumptionMeterListScreenBuilder,
@@ -162,6 +163,12 @@ class Router:
                         )
                         self.context.meter_readings_api.create(data)
                         next_screen = "meter_readings_input"
+
+                    case "tariff_add_request":
+                        self.context.tariff_api.create(
+                            TariffCreate.model_validate(cur_dto.payload)
+                        )
+                        next_screen = "tariff_list"
 
                     case "back_step":
                         try:

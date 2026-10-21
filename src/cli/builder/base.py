@@ -151,6 +151,15 @@ class BaseBuilder:
         )
         return choices
 
+    def get_accounts(self, property_id: int) -> list[AccountNumberResponse]:
+        account_numbers = self.context.account_number_api.list(property_id=property_id)
+
+        return account_numbers
+
+    def get_meters(self, property_id: int) -> list[MeterResponse]:
+        meters = self.context.meter_api.list(property_id=property_id)
+        return meters
+
 
 class UnauthScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
@@ -307,11 +316,6 @@ class AccountListScreenBuilder(BaseBuilder):
         self.add_table_account_list(self.accounts)
         self.add_choice_menu(self.get_choices(), message="Список особових рахунків:")
 
-    def get_accounts(self, property_id: int) -> list[AccountNumberResponse]:
-        account_numbers = self.context.account_number_api.list(property_id=property_id)
-
-        return account_numbers
-
     def get_choices(self) -> list:
         choices = []
         for account in self.accounts:
@@ -449,7 +453,7 @@ class TariffListScreenBuilder(BaseBuilder):
         choices.append(
             {
                 "value": {"action": "tariff_add"},
-                "name": "➕ Створити нову категорію",
+                "name": "➕ Додати новий тариф",
             }
         )
         return choices
@@ -507,6 +511,112 @@ class TariffDetailScreenBuilder(BaseBuilder):
         ]
         title = "\n[bold blue]💵 Деталізація тарифа[/bold blue]\n"
         return DataTableDTO(title=title, headers=headers, rows=row)
+
+
+class TariffAddScreenBuilder(BaseBuilder):
+    """Додання нового тарифу"""
+
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}",
+        )
+        self.add_text_label("Додання нового тарифу")
+        self.add_choice_menu(
+            self.get_account_choices(),
+            message="Оберіть особовий рахунок, до якого буде привязаний новий тариф: ",
+        )
+        self.add_input_component(
+            messages={"name": "Введіть назву тарифа: "}, action="tariff_add_request"
+        )
+        self.add_choice_menu(
+            self.get_choices_charge_type(), message="Оберіть тип тарифа: "
+        )
+        self.add_input_component(
+            messages={"price_per_unit": "Введіть грошове значення тарифа: "},
+            action="tariff_add_request",
+        )
+        self.add_input_component(
+            messages={
+                "effective_from": "Введіть дату початку дії тарифа у форматі 2026-12-31: "
+            },
+            action="tariff_add_request",
+        )
+        self.add_choice_menu(
+            self.get_choices_meters(), message="Оберіть лічильник (за потреби): "
+        )
+
+    def get_account_choices(self) -> list[dict]:
+        accounts = self.get_accounts(self.context.current_property.id)  # type: ignore
+        choices = []
+
+        for account in accounts:
+            choices.append(
+                {
+                    "name": f"📁 {account.provider_details.name} - {account.account_number}",
+                    "value": {
+                        "payload": {
+                            "account": account.id,
+                        }
+                    },
+                }
+            )
+        return choices
+
+    def get_choices_charge_type(self) -> list[dict]:
+        choices = [
+            {
+                "name": "📁 Фіксована місячна плата",
+                "value": {
+                    "payload": {
+                        "charge_type": "fixed_monthly",
+                    }
+                },
+            },
+            {
+                "name": "📁 За лічильником",
+                "value": {
+                    "payload": {
+                        "charge_type": "by_meter",
+                    }
+                },
+            },
+            {
+                "name": "📁 Одноразовий платіж",
+                "value": {
+                    "payload": {
+                        "charge_type": "one_time",
+                    }
+                },
+            },
+        ]
+        return choices
+
+    def get_choices_meters(self):
+        meters = self.get_meters(self.context.current_property.id)  # type: ignore
+        choices = [
+            {
+                "name": "📁 Без лічильника",
+                "value": {
+                    "payload": {
+                        "meter": None,
+                    }
+                },
+            }
+        ]
+        for meter in meters:
+            choices.append(
+                {
+                    "name": f"📁 {meter.name}",
+                    "value": {
+                        "payload": {
+                            "meter": meter.id,
+                        }
+                    },
+                }
+            )
+        return choices
 
 
 class TariffChangeScreenBuilder(BaseBuilder):
