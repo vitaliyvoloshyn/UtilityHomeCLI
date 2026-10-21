@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from loguru import logger
+
 from .config import APP_NAME
 
 
 def _keyring():
     import keyring
+
     return keyring
 
 
@@ -19,6 +22,7 @@ def save_credentials(session_id: str | None, csrf_token: str | None) -> None:
 
 def get_credentials() -> tuple[str | None, str | None]:
     """Повернути sessionid та csrftoken із Windows Credential Manager."""
+    logger.debug("Виклик get_credentials")
     keyring = _keyring()
     return (
         keyring.get_password(APP_NAME, "sessionid"),

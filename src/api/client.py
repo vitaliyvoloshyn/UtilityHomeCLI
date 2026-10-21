@@ -6,13 +6,14 @@ import requests
 
 from .config import (
     CSRF_URL,
+    IP_ADDRESS,
     LOGIN_URL,
     LOGOUT_URL,
     ME_URL,
     REGISTER_URL,
     RESEND_VERIFICATION_URL,
 )
-from .credentials import get_credentials, save_credentials
+from .credentials import clear_credentials, save_credentials
 
 
 class APIError(requests.HTTPError):
@@ -36,18 +37,18 @@ class APIClient:
 
     _CSRF_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
-    def __init__(self) -> None:
-        self.session = requests.Session()
-        self._load_credentials()
+    def __init__(self, session: requests.Session) -> None:
+        self.session = session
+        # self._load_credentials()
 
-    def _load_credentials(self) -> None:
-        session_id, csrf_token = get_credentials()
+    # def _load_credentials(self) -> None:
+    #     session_id, csrf_token = get_credentials()
 
-        if session_id:
-            self.session.cookies.set("sessionid", session_id, domain="127.0.0.1")
-        if csrf_token:
-            self.session.cookies.set("csrftoken", csrf_token, domain="127.0.0.1")
-            self.session.headers.update({"X-CSRFToken": csrf_token})
+    #     if session_id:
+    #         self.session.cookies.set("sessionid", session_id, domain=IP_ADDRESS)
+    #     if csrf_token:
+    #         self.session.cookies.set("csrftoken", csrf_token, domain=IP_ADDRESS)
+    #         self.session.headers.update({"X-CSRFToken": csrf_token})
 
     def _set_csrf_header(self, token: str) -> None:
         self.session.headers.update({"X-CSRFToken": token})
@@ -60,13 +61,13 @@ class APIClient:
         except requests.RequestException as exc:
             raise APIError("Не вдалося отримати CSRF token.") from exc
 
-        token = response.cookies.get("csrftoken", domain="127.0.0.1")
+        token = response.cookies.get("csrftoken", domain=IP_ADDRESS)
         if not token:
             raise APIError("Server did not return a CSRF token", response=response)
 
         self._set_csrf_header(token)
         save_credentials(
-            self.session.cookies.get("sessionid", domain="127.0.0.1"), token
+            self.session.cookies.get("sessionid", domain=IP_ADDRESS), token
         )
         return token
 
@@ -82,6 +83,7 @@ class APIClient:
         json: Any = None,
         retry_on_csrf: bool = True,
         timeout: float = 30.0,
+        **params,
     ) -> requests.Response:
         """Виконати HTTP-запит із централізованою CSRF-логікою."""
         method = method.upper()
@@ -89,16 +91,18 @@ class APIClient:
 
         if csrf_required and "X-CSRFToken" not in self.session.headers:
             self.refresh_csrf()
-
+        response = requests.Response()
         try:
-            response = self.session.request(method, url, json=json, timeout=timeout)
-
+            response = self.session.request(
+                method, url, json=json, params=params, timeout=timeout
+            )
             # Якщо отримали 403, пробуємо оновити токен ОДИН раз
             if csrf_required and response.status_code == 403 and retry_on_csrf:
                 self.refresh_csrf()
                 # Робимо повторний запит через сесію (вже без виклику retry_on_csrf)
-                response = self.session.request(method, url, json=json, timeout=timeout)
-
+                response = self.session.request(
+                    method, url, params=params, json=json, timeout=timeout
+                )
             # Перевіряємо фінальний статус-код (викине HTTPError для >= 400)
             response.raise_for_status()
 
@@ -139,4 +143,6 @@ class APIClient:
         return self.request("POST", RESEND_VERIFICATION_URL, json={"email": email})
 
     def logout(self):
-        return self.request("POST", LOGOUT_URL)
+        response = self.request("POST", LOGOUT_URL)
+        clear_credentials()
+        return response

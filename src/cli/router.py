@@ -1,63 +1,222 @@
 import os
+from datetime import date
 
-from ..api import APIError, AuthError
+from loguru import logger
+
+from ..api import *
+from ..screen.base_screen import BaseScreen
+from ..screen.schema import ComponentDTO
+from .builder import *
+from .builder.base import BaseBuilder, InputReadingValueScreenBuilder
 from .context import AppContext
-from .screens import *
 
-# Сюди ж імпортуєте інші екрани, наприклад, DataTableScreen
+
+class ScreenHistory:
+    skiped_actions = ("", "back_step", "menu_unauth")
+
+    def __init__(self):
+        logger.debug("Init class ScreenHistory")
+        self._screen_history: list[ComponentDTO] = []
+
+    def save(self, screen: ComponentDTO):
+        if screen.action in self.skiped_actions:
+            return
+        if not isinstance(screen, ComponentDTO):
+            raise TypeError("Аргумент screen не являється об'єктом класу ComponentDTO")
+        self._screen_history.append(screen)
+        logger.debug(self._screen_history)
+
+    def get(self) -> ComponentDTO:
+        if len(self._screen_history) == 0:
+            raise ValueError("Історія наразі не містить ніяких записів")
+        screen = self._screen_history.pop()
+        return screen
 
 
 class Router:
     def __init__(self, context: AppContext):
         self.context = context
-        # Реєструємо екрани: ключ — назва, значення — клас екрану
-        self._screens = {
-            "auth": AuthScreen(self.context),
-            "main_menu": MainMenuScreen(self.context),
-            "api_error": APIErrorScreen(self.context),
-            "menu_unauth": MenuUnauthorized(self.context),
-            "register": RegisterScreen(self.context),
-            # "data_table": DataTableScreen(self.context),
+        self.history = ScreenHistory()
+
+        self._builders: dict[str, type[BaseBuilder]] = {
+            "login_screen": LoginScreenBuilder,
+            "main_menu": MainMenuScreenBuilder,
+            "api_error": ErrorScreenBuilder,
+            "menu_unauth": UnauthScreenBuilder,
+            "register_screen": RegisterScreenBuilder,
+            "property_detail": PropertyDetailScreenBuilder,
+            "account_list": AccountListScreenBuilder,
+            "account_detail": AccountDetailScreenBuilder,
+            "category_list": CategoryListScreenBuilder,
+            "category_add": CategoryAddScreenBuilder,
+            "provider_list": ProviderListScreenBuilder,
+            "provider_add": ProviderAddScreenBuilder,
+            "tariff_list": TariffListScreenBuilder,
+            "tariff_detail": TariffDetailScreenBuilder,
+            "tariff_change": TariffChangeScreenBuilder,
+            "meter_readings_input": MeterReadingsInputScreenBuilder,
+            "input_readings_value": InputReadingValueScreenBuilder,
+            "consumption_meter_list": ConsumptionMeterListScreenBuilder,
+            "readings_list": ConsumpionListScreenBuilder,
         }
-        self.current_screen_name = "main_menu"
+
+        # self.initial_builder = "main_menu"
+
+    def get_screen_builder(self, action: str) -> type[BaseBuilder]:
+        builder = self._builders.get(action, None)
+        if builder is None:
+            raise ValueError(f"Помилка: Екран {action} не знайдено.")
+        return builder
+
+    def get_screen(self, builder: type[BaseBuilder], dto) -> BaseScreen:
+        return builder(self.context, dto).build()
 
     def run(self):
+        initial_dto = ComponentDTO(action="main_menu")
+        cur_dto = ComponentDTO(action="main_menu")
+        prev_dto = cur_dto
         try:
             self.context.connect_to_server()
         except AuthError:
-            self.current_screen_name = "menu_unauth"
+            logger.debug("auth_error")
+            cur_dto = ComponentDTO(action="menu_unauth")
         except APIError as exc:
-            self.context.error_message = str(exc)
-            self.current_screen_name = "api_error"
+            print(exc)
+            self.context.is_running = False
 
         while self.context.is_running:
             # Отримуємо об'єкт поточного екрану
-            screen = self._screens.get(self.current_screen_name)
-
-            if not screen:
-                print(f"Помилка: Екран {self.current_screen_name} не знайдено.")
+            try:
+                screen_builder = self.get_screen_builder(cur_dto.action)
+            except ValueError as e:
+                print(e)
                 break
+
+            screen: BaseScreen = self.get_screen(screen_builder, cur_dto)
 
             # Рендеримо екран і отримуємо назву наступного
             self.clear_console()
             try:
-                next_screen = screen.render()
-            except AuthError:
+                cur_dto = screen.show()
+                logger.debug(f"dto = {cur_dto}")
+                next_screen = cur_dto.action
+
+                match next_screen:
+                    case "login":
+                        next_screen = "main_menu"
+
+                    case "register":
+                        self.register(cur_dto.payload)
+                        print(
+                            "Пройдіть верифікацію за посиланням у повідомленні у Вашій поштовій скриньці.\nПотім Ви зможете авторизуватися"
+                        )
+                        self.input_continue()
+
+                    case "main_menu":
+                        self.reset_current_property()
+
+                    case "property_detail":
+                        self.context.current_property = next(
+                            property
+                            for property in self.context.properties
+                            if property.id == cur_dto.params.get("property_id")
+                        )
+
+                    case "category_add_request":
+                        self.add_category(cur_dto.payload)
+                        next_screen = "category_list"
+
+                    case "provider_add_request":
+                        self.add_provider(cur_dto.payload)
+                        next_screen = "provider_list"
+
+                    case "tariff_change_request":
+                        try:
+                            year = cur_dto.payload.get("year")
+                            month = cur_dto.payload.get("month")
+                            if year is None and month is None:
+                                raise ValueError("Не задані рік або місяць")
+                            if not isinstance(year, (int, str)) or not isinstance(
+                                month, (int, str)
+                            ):
+                                raise TypeError("Рік/місяць мають бути числом")
+                            year = int(year)
+                            month = int(month)
+                            date_from = self.get_date(year, month)
+                            tariff_ch_dto = TariffChange(
+                                tariff_id=cur_dto.payload["tariff_id"],
+                                new_price=cur_dto.payload["new_price"],
+                                effective_from=date_from,
+                            )
+                            self.context.tariff_api.change_tariff(tariff_ch_dto)
+                            next_screen = "tariff_list"
+                        except ValueError as e:
+                            next_screen = "api_error"
+                            self.context.error_message = str(e)
+
+                    case "add_readings_request":
+                        data = MeterReadingCreate(
+                            meter=cur_dto.payload.get("meter_id"),  # type: ignore
+                            reading_value=cur_dto.payload.get("reading_value"),  # type: ignore
+                            reading_date=date.today(),
+                        )
+                        self.context.meter_readings_api.create(data)
+                        next_screen = "meter_readings_input"
+
+                    case "back_step":
+                        try:
+                            cur_dto = self.history.get()
+                        except ValueError:
+                            cur_dto = initial_dto
+                        next_screen = cur_dto.action
+                        prev_dto = ComponentDTO()
+
+                    case "logout":
+                        self.reset_current_property()
+                        self.context.logout()
+                        next_screen = "menu_unauth"
+
+                    case "exit":
+                        self.context.is_running = False
+                        break
+
+            except AuthError as e:
+                print(e)
+                self.input_continue()
                 next_screen = "menu_unauth"
             except APIError as exc:
                 self.context.error_message = str(exc)
                 next_screen = "api_error"
+            except KeyboardInterrupt:
+                next_screen = "exit"
 
-            if next_screen == "logout":
-                self.context.logout()
-                next_screen = "menu_unauth"
+            # self.current_builder = next_screen
+            self.history.save(prev_dto)
+            prev_dto = cur_dto
 
-            if next_screen == "exit":
-                self.context.is_running = False
-                break
+    def login(self, payload: dict):
+        self.context.login(payload)
 
-            self.current_screen_name = next_screen
+    def register(self, payload: dict):
+        self.context.api.register(payload)
+
+    def reset_current_property(self):
+        self.context.current_property = None
 
     def clear_console(self):
-        # os.system("cls" if os.name == "nt" else "clear")
-        ...
+        os.system("cls" if os.name == "nt" else "clear")
+
+    @staticmethod
+    def input_continue():
+        input("Для продовження натисніть ENTER ...")
+
+    def add_category(self, payload: dict):
+        category_dto = CategoryCreate.model_validate(payload)
+        self.context.category_api.create(category_dto)
+
+    def add_provider(self, payload: dict):
+        provider_dto = ProviderCreate.model_validate(payload)
+        self.context.provider_api.create(provider_dto)
+
+    def get_date(self, year: int, month: int):
+        return date(year, month, 1)

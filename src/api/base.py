@@ -5,6 +5,7 @@ from typing import ClassVar, Generic, TypeVar
 from pydantic import BaseModel
 
 from .client import APIClient
+from .session import session
 
 CreateModelT = TypeVar("CreateModelT", bound=BaseModel)
 UpdateModelT = TypeVar("UpdateModelT", bound=BaseModel)
@@ -15,13 +16,24 @@ class BaseResourceAPI(Generic[CreateModelT, UpdateModelT, ResponseModelT]):
     """Універсальний CRUD-шар над APIClient."""
 
     endpoint: ClassVar[str]
-    response_model: ClassVar[type[ResponseModelT]]
+    response_model: ClassVar[type[ResponseModelT]]  # type: ignore
 
-    def __init__(self, client: APIClient = APIClient) -> None:
-        self.client = client()
+    def __init__(self, client: type[APIClient] = APIClient) -> None:
+        self.client = client(session)
 
-    def list(self) -> list[ResponseModelT]:
-        response = self.client.request("GET", self.endpoint)
+    def list(self, **params) -> list[ResponseModelT]:
+        response = self.client.request("GET", self.endpoint, **params)
+        data = response.json()
+        if not isinstance(data, list):
+            raise TypeError(
+                f"Expected a list from {self.endpoint}, got {type(data).__name__}"
+            )
+        return [self.response_model.model_validate(item) for item in data]
+
+    def list_by_property(self, property_id: int) -> list[ResponseModelT]:
+        response = self.client.request(
+            "GET", f"{self.endpoint}?property_id={property_id}"
+        )
         data = response.json()
         if not isinstance(data, list):
             raise TypeError(
@@ -37,7 +49,7 @@ class BaseResourceAPI(Generic[CreateModelT, UpdateModelT, ResponseModelT]):
         response = self.client.request(
             "POST",
             self.endpoint,
-            json=payload.model_dump(exclude_unset=True),
+            json=payload.model_dump(exclude_unset=True, mode="json"),
         )
         return self.response_model.model_validate(response.json())
 
