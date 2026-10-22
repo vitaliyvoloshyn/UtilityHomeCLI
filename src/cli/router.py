@@ -7,12 +7,16 @@ from ..api import *
 from ..screen.base_screen import BaseScreen
 from ..screen.schema import ComponentDTO
 from .builder import *
-from .builder.base import BaseBuilder, InputReadingValueScreenBuilder
+from .builder.base import (
+    BaseBuilder,
+    InputReadingValueScreenBuilder,
+    PaymentSuccessScreenBuilder,
+)
 from .context import AppContext
 
 
 class ScreenHistory:
-    skiped_actions = ("", "back_step", "menu_unauth", "generate_bills")
+    skiped_actions = ("", "back_step", "menu_unauth", "generate_bills", "payment")
 
     def __init__(self):
         logger.debug("Init class ScreenHistory")
@@ -23,7 +27,7 @@ class ScreenHistory:
             return
         if not isinstance(screen, ComponentDTO):
             raise TypeError("Аргумент screen не являється об'єктом класу ComponentDTO")
-        if len(self._screen_history) > 0:
+        if len(self._screen_history) > 0:  # noqa: SIM102
             if self._screen_history[-1].action == screen.action:
                 return
         self._screen_history.append(screen)
@@ -64,9 +68,9 @@ class Router:
             "consumption_meter_list": ConsumptionMeterListScreenBuilder,
             "readings_list": ConsumpionListScreenBuilder,
             "generate_bills_success": GenerateBillsSuccessScreenBuilder,
+            "payment": PaymentScreenBuilder,
+            "payment_success": PaymentSuccessScreenBuilder,
         }
-
-        # self.initial_builder = "main_menu"
 
     def get_screen_builder(self, action: str) -> type[BaseBuilder]:
         builder = self._builders.get(action, None)
@@ -186,6 +190,14 @@ class Router:
                         self.context.invoice_api.generate_bills()
                         cur_dto.action = "generate_bills_success"
 
+                    case "payment_request":
+                        cur_dto.params.update(cur_dto.payload)
+                        self.context.account_number_api.top_up(
+                            amount=cur_dto.payload.get("amount"),  # type: ignore
+                            account_id=cur_dto.params.get("account_id"),  # type: ignore
+                        )
+                        cur_dto.action = "payment_success"
+
                     case "back_step":
                         try:
                             cur_dto = self.history.get()
@@ -228,8 +240,8 @@ class Router:
         self.context.current_property = None
 
     def clear_console(self):
-        ...
-        # os.system("cls" if os.name == "nt" else "clear")
+        # ...
+        os.system("cls" if os.name == "nt" else "clear")
 
     @staticmethod
     def input_continue():

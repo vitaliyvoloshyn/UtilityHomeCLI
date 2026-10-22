@@ -1,7 +1,5 @@
 from copy import deepcopy
-from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
-from unittest.mock import Base
 
 from ...api import *
 from ...screen.base_screen import BaseScreen
@@ -327,7 +325,11 @@ class AccountListScreenBuilder(BaseBuilder):
                 {
                     "value": {
                         "action": "account_unpaid_detail",
-                        "params": {"account_id": account.id},
+                        "params": {
+                            "account_id": account.id,
+                            "number": account.account_number,
+                            "provider_name": account.provider_details.name,
+                        },
                     },
                     "name": f"📁 {account.account_number} - {account.provider_details.name}",
                 }
@@ -338,6 +340,7 @@ class AccountListScreenBuilder(BaseBuilder):
                 "name": "✨ Запустити генерацію рахунків на оплату",
             }
         )
+
         choices.append(
             {
                 "value": {"action": "account_add"},
@@ -352,22 +355,36 @@ class AccountUnpaidDetailScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
         assert context.current_property is not None
+        account_id = dto.params.get("account_id")
+        number = dto.params.get("number")
+        provider_name = dto.params.get("provider_name")
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
         )
         self.add_text_label(
             f"{'Список неоплачених/частково оплачених рахунків на сплату комунальних послуг':-^122}"
         )
-        self.add_table_invoice_list(self.get_invoices(dto.params.get("account_id")))  # type: ignore
+        self.add_table_invoice_list(self.get_invoices(account_id))  # type: ignore
         self.add_choice_menu(
             [
                 {
                     "name": "📄 Показати всі рахунки на оплату",
                     "value": {
                         "action": "account_all_detail",
-                        "params": {"account_id": dto.params.get("account_id")},
+                        "params": {"account_id": account_id},
                     },
-                }
+                },
+                {
+                    "value": {
+                        "action": "payment",
+                        "params": {
+                            "account_id": account_id,
+                            "number": number,
+                            "provider_name": provider_name,
+                        },
+                    },
+                    "name": "💰 Поповнити баланс особового рахунка",
+                },
             ],
         )
 
@@ -382,14 +399,31 @@ class AccountAllDetailScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
         assert context.current_property is not None
+        account_id = dto.params.get("account_id")
+        number = dto.params.get("number")
+        provider_name = dto.params.get("provider_name")
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
         )
         self.add_text_label(
             f"{'Список всіх рахунків на сплату комунальних послуг':-^122}"
         )
-        self.add_table_invoice_list(self.get_invoices(dto.params.get("account_id")))  # type: ignore
-        self.add_choice_menu([], message="Список особових рахунків:")
+        self.add_table_invoice_list(self.get_invoices(account_id))  # type: ignore
+        self.add_choice_menu(
+            [
+                {
+                    "value": {
+                        "action": "payment",
+                        "params": {
+                            "account_id": account_id,
+                            "number": number,
+                            "provider_name": provider_name,
+                        },
+                    },
+                    "name": "💰 Поповнити баланс особового рахунка",
+                },
+            ],
+        )
 
     def get_invoices(self, account_id: int):
         return self.context.invoice_api.list(
@@ -857,4 +891,46 @@ class GenerateBillsSuccessScreenBuilder(BaseBuilder):
             f"{context.current_property.name}, {context.current_property.address}\n[cyan]Генерація рахунків на оплату[/cyan]"
         )
         self.add_text_label("Рахунки успішно згенеровано за всі пропущені періоди.")
+        self.add_choice_menu([])
+
+
+class PaymentScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        account_id = dto.params.get("account_id")
+        number = dto.params.get("number")
+        provider_name = dto.params.get("provider_name")
+        assert account_id is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Поповнення балансу особового рахунка {number} ({provider_name})[/cyan]",
+            params={
+                "params": {
+                    "account_id": account_id,
+                    "number": number,
+                    "provider_name": provider_name,
+                }
+            },
+        )
+
+        self.add_input_component(
+            {"amount": "Введіть суму поповнення: "}, action="payment_request"
+        )
+
+
+class PaymentSuccessScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        account_id = dto.params.get("account_id")
+        number = dto.params.get("number")
+        provider_name = dto.params.get("provider_name")
+        amount = dto.params.get("amount")
+        assert account_id is not None
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Поповнення балансу особового рахунка[/cyan]"
+        )
+        self.add_text_label(
+            f"Баланс особового рахунка {number} ({provider_name}) успішно поповнено на {amount} грн"
+        )
         self.add_choice_menu([])

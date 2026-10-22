@@ -19,6 +19,7 @@ class BaseScreen:
         self.components.append(component)
 
     def show(self) -> ComponentDTO:
+
         out_dict: dict = {}
         for c in self.components:
             res = c.render()
@@ -35,4 +36,5 @@ class BaseScreen:
                     else:
                         out_dict[k] = v
         dto = ComponentDTO.model_validate(out_dict)
+        logger.debug(dto)
         return dto
