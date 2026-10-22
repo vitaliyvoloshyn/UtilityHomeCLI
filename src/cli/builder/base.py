@@ -314,7 +314,10 @@ class AccountListScreenBuilder(BaseBuilder):
             f"{context.current_property.name}, {context.current_property.address}"
         )
         self.add_table_account_list(self.accounts)
-        self.add_choice_menu(self.get_choices(), message="Список особових рахунків:")
+        self.add_choice_menu(
+            self.get_choices(),
+            message="Виберіть особовий рахунок для переглядку рахунків на оплату комунальних послуг:",
+        )
 
     def get_choices(self) -> list:
         choices = []
@@ -322,7 +325,7 @@ class AccountListScreenBuilder(BaseBuilder):
             choices.append(
                 {
                     "value": {
-                        "action": "account_detail",
+                        "action": "account_unpaid_detail",
                         "params": {"account_id": account.id},
                     },
                     "name": f"📁 {account.account_number} - {account.provider_details.name}",
@@ -338,12 +341,45 @@ class AccountListScreenBuilder(BaseBuilder):
         return choices
 
 
-class AccountDetailScreenBuilder(BaseBuilder):
+class AccountUnpaidDetailScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
+        )
+        self.add_text_label(
+            f"{'Список неоплачених/частково оплачених рахунків на сплату комунальних послуг':-^122}"
+        )
+        self.add_table_invoice_list(self.get_invoices(dto.params.get("account_id")))  # type: ignore
+        self.add_choice_menu(
+            [
+                {
+                    "name": "📄 Показати всі рахунки на оплату",
+                    "value": {
+                        "action": "account_all_detail",
+                        "params": {"account_id": dto.params.get("account_id")},
+                    },
+                }
+            ],
+        )
+
+    def get_invoices(self, account_id: int):
+        return self.context.invoice_api.list(
+            account_id=account_id,
+            status=["unpaid", "partially_paid"],
+        )
+
+
+class AccountAllDetailScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}"
+        )
+        self.add_text_label(
+            f"{'Список всіх рахунків на сплату комунальних послуг':-^122}"
         )
         self.add_table_invoice_list(self.get_invoices(dto.params.get("account_id")))  # type: ignore
         self.add_choice_menu([], message="Список особових рахунків:")
@@ -351,7 +387,7 @@ class AccountDetailScreenBuilder(BaseBuilder):
     def get_invoices(self, account_id: int):
         return self.context.invoice_api.list(
             account_id=account_id,
-            status=["unpaid", "partially_paid"],
+            status=["unpaid", "partially_paid", "paid"],
         )
 
 
@@ -793,7 +829,7 @@ class ConsumpionListScreenBuilder(BaseBuilder):
         rows = []
         for reading in readings:
             row = (
-                str(reading.reading_value.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+                str(reading.reading_value),
                 str(reading.reading_date),
                 str(round(reading.consumption)),
             )

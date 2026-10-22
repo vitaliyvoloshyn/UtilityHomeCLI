@@ -1,7 +1,8 @@
 from .base import (
     AccountAddScreenBuilder,
-    AccountDetailScreenBuilder,
+    AccountAllDetailScreenBuilder,
     AccountListScreenBuilder,
+    AccountUnpaidDetailScreenBuilder,
     CategoryAddScreenBuilder,
     CategoryListScreenBuilder,
     ConsumpionListScreenBuilder,
@@ -23,8 +24,9 @@ from .base import (
 
 __all__ = [
     "AccountAddScreenBuilder",
-    "AccountDetailScreenBuilder",
+    "AccountAllDetailScreenBuilder",
     "AccountListScreenBuilder",
+    "AccountUnpaidDetailScreenBuilder",
     "CategoryAddScreenBuilder",
     "CategoryListScreenBuilder",
     "ConsumpionListScreenBuilder",

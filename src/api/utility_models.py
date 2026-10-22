@@ -38,21 +38,21 @@ class MeterResponse(MeterCreate):
 
 class MeterReadingCreate(APIModel):
     meter: int
-    reading_value: Decimal = Field(..., max_digits=12, decimal_places=3)
+    reading_value: int
     reading_date: date
     is_estimated: bool = False
 
 
 class MeterReadingUpdate(APIModel):
     meter: int | None = None
-    reading_value: Decimal | None = Field(default=None, max_digits=12, decimal_places=3)
+    reading_value: int | None = None
     reading_date: date | None = None
     is_estimated: bool | None = None
 
 
 class MeterReadingResponse(MeterReadingCreate):
     id: int
-    consumption: float
+    consumption: int
 
 
 class TariffCreate(APIModel):
@@ -128,9 +128,9 @@ class Item(APIModel):
     id: int
     tariff_name: str
     unit_of_measure: str | None
-    previous_reading: Decimal | None
-    current_reading: Decimal | None
-    consumption: Decimal | None
+    previous_reading: int | None
+    current_reading: int | None
+    consumption: int | None
     tariff_price_at_billing: Decimal = Field(decimal_places=2)
     base_amount: Decimal = Field(decimal_places=2)
     benefit_discount: Decimal | None

@@ -206,7 +206,6 @@ class TableInvoiceList(BaseComponent[None]):
         self.data = data
 
     def render(self) -> None:
-        console.print("\n[bold blue]💵 РАХУНОК ЗА КОМУНАЛЬНІ ПОСЛУГИ[/bold blue]\n")
         for invoice in self.data:
             # --- БЛОК 1: ЗАГАЛЬНА ІНФОРМАЦІЯ (БЕЗ РАМОК) ---
 
@@ -299,8 +298,8 @@ class TableInvoiceList(BaseComponent[None]):
             # --- ВИВЕДЕННЯ В КОНСОЛЬ ---
 
             console.print(info_table)
-            console.print("\n")  # Невеликий відступ між блоками
             console.print(calc_table)
+            console.print(f"{'':*<122}")
 
     # Функція для підсвічування статусу
     @staticmethod
