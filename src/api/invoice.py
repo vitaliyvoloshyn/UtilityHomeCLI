@@ -8,3 +8,6 @@ class InvoiceAPI(BaseResourceAPI[InvoiceCreate, InvoiceUpdate, InvoiceResponse])
 
     endpoint = INVOICES_URL
     response_model = InvoiceResponse
+
+    def generate_bills(self):
+        self.client.request(method="POST",url=f"{self.endpoint}generate/")

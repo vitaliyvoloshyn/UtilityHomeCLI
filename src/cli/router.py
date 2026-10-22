@@ -12,7 +12,7 @@ from .context import AppContext
 
 
 class ScreenHistory:
-    skiped_actions = ("", "back_step", "menu_unauth")
+    skiped_actions = ("", "back_step", "menu_unauth", "generate_bills")
 
     def __init__(self):
         logger.debug("Init class ScreenHistory")
@@ -23,8 +23,10 @@ class ScreenHistory:
             return
         if not isinstance(screen, ComponentDTO):
             raise TypeError("Аргумент screen не являється об'єктом класу ComponentDTO")
+        if len(self._screen_history) > 0:
+            if self._screen_history[-1].action == screen.action:
+                return
         self._screen_history.append(screen)
-        logger.debug(self._screen_history)
 
     def get(self) -> ComponentDTO:
         if len(self._screen_history) == 0:
@@ -61,6 +63,7 @@ class Router:
             "input_readings_value": InputReadingValueScreenBuilder,
             "consumption_meter_list": ConsumptionMeterListScreenBuilder,
             "readings_list": ConsumpionListScreenBuilder,
+            "generate_bills_success": GenerateBillsSuccessScreenBuilder,
         }
 
         # self.initial_builder = "main_menu"
@@ -179,6 +182,10 @@ class Router:
                         )
                         cur_dto.action = "account_list"
 
+                    case "generate_bills":
+                        self.context.invoice_api.generate_bills()
+                        cur_dto.action = "generate_bills_success"
+
                     case "back_step":
                         try:
                             cur_dto = self.history.get()
@@ -208,6 +215,7 @@ class Router:
 
             # self.current_builder = next_screen
             self.history.save(prev_dto)
+            logger.debug(self.history._screen_history)
             prev_dto = cur_dto
 
     def login(self, payload: dict):
@@ -220,7 +228,8 @@ class Router:
         self.context.current_property = None
 
     def clear_console(self):
-        os.system("cls" if os.name == "nt" else "clear")
+        ...
+        # os.system("cls" if os.name == "nt" else "clear")
 
     @staticmethod
     def input_continue():

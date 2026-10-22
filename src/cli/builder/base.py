@@ -1,6 +1,7 @@
 from copy import deepcopy
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
+from unittest.mock import Base
 
 from ...api import *
 from ...screen.base_screen import BaseScreen
@@ -331,6 +332,12 @@ class AccountListScreenBuilder(BaseBuilder):
                     "name": f"📁 {account.account_number} - {account.provider_details.name}",
                 }
             )
+        choices.append(
+            {
+                "value": {"action": "generate_bills"},
+                "name": "✨ Запустити генерацію рахунків на оплату",
+            }
+        )
         choices.append(
             {
                 "value": {"action": "account_add"},
@@ -840,3 +847,14 @@ class ConsumpionListScreenBuilder(BaseBuilder):
             rows=rows,
         )
         return data
+
+
+class GenerateBillsSuccessScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Генерація рахунків на оплату[/cyan]"
+        )
+        self.add_text_label("Рахунки успішно згенеровано за всі пропущені періоди.")
+        self.add_choice_menu([])
