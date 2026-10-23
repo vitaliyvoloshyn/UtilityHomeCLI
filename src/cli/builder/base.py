@@ -385,6 +385,15 @@ class AccountUnpaidDetailScreenBuilder(BaseBuilder):
                     },
                     "name": "💰 Поповнити баланс особового рахунка",
                 },
+                {
+                    "value": {
+                        "action": "recalculate",
+                        "params": {
+                            "account_id": account_id,
+                        },
+                    },
+                    "name": "🧮 Створити перерахунок/корекцію",
+                },
             ],
         )
 
@@ -421,6 +430,15 @@ class AccountAllDetailScreenBuilder(BaseBuilder):
                         },
                     },
                     "name": "💰 Поповнити баланс особового рахунка",
+                },
+                {
+                    "value": {
+                        "action": "recalculate",
+                        "params": {
+                            "account_id": account_id,
+                        },
+                    },
+                    "name": "🧮 Створити перерахунок/корекцію",
                 },
             ],
         )
@@ -932,5 +950,46 @@ class PaymentSuccessScreenBuilder(BaseBuilder):
         )
         self.add_text_label(
             f"Баланс особового рахунка {number} ({provider_name}) успішно поповнено на {amount} грн"
+        )
+        self.add_choice_menu([])
+
+
+class RecalculateScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        account_id = dto.params.get("account_id")
+        # number = dto.params.get("number")
+        # provider_name = dto.params.get("provider_name")
+        # amount = dto.params.get("amount")
+        assert account_id is not None
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Створення перерахунку[/cyan]",
+            params={"payload": {"id": account_id}},
+        )
+        self.add_input_component(
+            messages={
+                "amount": "Введіть суму перерахунку: ",
+                "description": "Введіть назву або короткий опис перерахунку: ",
+                "billing_period": "Введіть розрахунковий місяць (будь-яка дата місяця в форматі '2026-12-31'): ",
+            },
+            action="recalculate_request",
+        )
+
+
+class RecalculateSuccessScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        # account_id = dto.params.get("account_id")
+        # number = dto.params.get("number")
+        # provider_name = dto.params.get("provider_name")
+        # amount = dto.params.get("amount")
+        # assert account_id is not None
+        assert context.current_property is not None
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Створення перерахунку[/cyan]"
+        )
+        self.add_text_label(
+            "Перерахунок успішно збережений\nДля внесення поточного перерахунка в рахунок на оплату сформуйте квитанцію або повторно сформуйте квитанцію, якщо перерахунок припадає на період вже сформованої квитанції"
         )
         self.add_choice_menu([])

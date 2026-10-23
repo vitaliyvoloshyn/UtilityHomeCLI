@@ -2,6 +2,7 @@ from .base import BaseResourceAPI
 from .config import ACCOUNT_NUMBERS_URL
 from .models import (
     AccountNumberCreate,
+    AccountNumberReculculate,
     AccountNumberResponse,
     AccountNumberUpdate,
 )
@@ -30,4 +31,15 @@ class AccountNumberAPI(
             method="POST",
             url=f"{self.endpoint}{account_id}/top-up/",
             json={"amount": amount},
+        )
+
+    def recalculate(self, data: AccountNumberReculculate):
+        """Створення перерахунку
+        Можна використовувати для створення корекції для синхронізації даних api та квитанції оператора
+        або внесення в квитанції одноразових нарахувань типу опалення
+        """
+        self.client.request(
+            method="POST",
+            url=f"{self.endpoint}{data.id}/recalculate/",
+            json=data.model_dump(mode="json"),
         )

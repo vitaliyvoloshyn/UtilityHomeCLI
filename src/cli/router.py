@@ -16,7 +16,15 @@ from .context import AppContext
 
 
 class ScreenHistory:
-    skiped_actions = ("", "back_step", "menu_unauth", "generate_bills", "payment")
+    skiped_actions = (
+        "",
+        "back_step",
+        "menu_unauth",
+        "generate_bills",
+        "payment",
+        "recalculate",
+        "recalculate_success",
+    )
 
     def __init__(self):
         logger.debug("Init class ScreenHistory")
@@ -70,6 +78,8 @@ class Router:
             "generate_bills_success": GenerateBillsSuccessScreenBuilder,
             "payment": PaymentScreenBuilder,
             "payment_success": PaymentSuccessScreenBuilder,
+            "recalculate": RecalculateScreenBuilder,
+            "recalculate_success": RecalculateSuccessScreenBuilder,
         }
 
     def get_screen_builder(self, action: str) -> type[BaseBuilder]:
@@ -197,6 +207,11 @@ class Router:
                             account_id=cur_dto.params.get("account_id"),  # type: ignore
                         )
                         cur_dto.action = "payment_success"
+
+                    case "recalculate_request":
+                        data = AccountNumberReculculate.model_validate(cur_dto.payload)
+                        self.context.account_number_api.recalculate(data)
+                        cur_dto.action = "recalculate_success"
 
                     case "back_step":
                         try:

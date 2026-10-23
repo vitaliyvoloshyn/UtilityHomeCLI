@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base_model import APIModel
 
@@ -78,6 +79,20 @@ class AccountNumberResponse(APIModel):
     balance: float
     property_details: PropertyResponse
     provider_details: ProviderResponse
+
+
+class AccountNumberReculculate(APIModel):
+    id: int
+    amount: float
+    description: str
+    billing_period: date
+
+    @model_validator(mode="before")
+    @classmethod
+    def date_prevalidate(cls, data: Any) -> Any:
+        if isinstance(data, dict) and isinstance(data.get("billing_period"), date):
+            data["billing_period"] = data["billing_period"].replace(day=1)
+        return data
 
 
 class UserResponse(APIModel):
