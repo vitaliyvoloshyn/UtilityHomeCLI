@@ -201,105 +201,104 @@ class TableAccountsList(BaseComponent[None]):
         console.print(table)
 
 
-class TableInvoiceList(BaseComponent[None]):
-    def __init__(self, data: list[InvoiceResponse]) -> None:
-        self.data = data
+class TableInvoice(BaseComponent[None]):
+    def __init__(self, invoice: InvoiceResponse) -> None:
+        self.invoice = invoice
 
     def render(self) -> None:
-        for invoice in self.data:
-            # --- БЛОК 1: ЗАГАЛЬНА ІНФОРМАЦІЯ (БЕЗ РАМОК) ---
+        # --- БЛОК 1: ЗАГАЛЬНА ІНФОРМАЦІЯ (БЕЗ РАМОК) ---
 
-            # Використовуємо box=None, щоб повністю сховати сітку
-            info_table = Table(show_header=False, box=None, padding=(0, 1, 0, 1))
+        # Використовуємо box=None, щоб повністю сховати сітку
+        info_table = Table(show_header=False, box=None, padding=(0, 1, 0, 1))
 
-            # Задаємо 4 колонки для вирівнювання лівої та правої частин
-            info_table.add_column(width=22, style="bold cyan")  # Назва поля (ліворуч)
-            info_table.add_column(width=35)  # Значення поля (ліворуч)
-            info_table.add_column(
-                width=20, justify="right", style="bold cyan"
-            )  # Назва поля (праворуч)
-            info_table.add_column(width=18, justify="right")  # Значення поля (праворуч)
+        # Задаємо 4 колонки для вирівнювання лівої та правої частин
+        info_table.add_column(width=22, style="bold cyan")  # Назва поля (ліворуч)
+        info_table.add_column(width=35)  # Значення поля (ліворуч)
+        info_table.add_column(
+            width=20, justify="right", style="bold cyan"
+        )  # Назва поля (праворуч)
+        info_table.add_column(width=18, justify="right")  # Значення поля (праворуч)
 
-            # Додаємо рядки загальної інформації
-            info_table.add_row(
-                "Постачальник послуг:",
-                invoice.provider_name,
-                "Розрахунковий період:",
-                invoice.billing_period_display,
-            )
-            info_table.add_row("О/р:", f"[yellow]{invoice.account_number}[/]", "", "")
-            info_table.add_row(
-                "Пільги:",
-                f"[magenta]{invoice.benefit_name}[/]",
-                "Статус:",
-                self.get_status_text(invoice.status_display),
-            )
+        # Додаємо рядки загальної інформації
+        info_table.add_row(
+            "Постачальник послуг:",
+            self.invoice.provider_name,
+            "Розрахунковий період:",
+            self.invoice.billing_period_display,
+        )
+        info_table.add_row("О/р:", f"[yellow]{self.invoice.account_number}[/]", "", "")
+        info_table.add_row(
+            "Пільги:",
+            f"[magenta]{self.invoice.benefit_name}[/]",
+            "Статус:",
+            self.get_status_text(self.invoice.status_display),
+        )
 
-            # --- БЛОК 2: ТАБЛИЦЯ НАРАХУВАНЬ (З РАМКАМИ) ---
-            # Використовуємо коробковий стиль SQUARE та вмикаємо лінії між рядками
-            calc_table = Table(
-                show_header=True, box=SQUARE, show_lines=True, border_style="gray37"
-            )
+        # --- БЛОК 2: ТАБЛИЦЯ НАРАХУВАНЬ (З РАМКАМИ) ---
+        # Використовуємо коробковий стиль SQUARE та вмикаємо лінії між рядками
+        calc_table = Table(
+            show_header=True, box=SQUARE, show_lines=True, border_style="gray37"
+        )
 
-            calc_table.add_column(
-                "Послуга / Тариф", width=25, header_style="bold white on blue"
-            )
-            calc_table.add_column(
-                "Тариф", width=12, justify="right", header_style="bold white on blue"
-            )
-            calc_table.add_column(
-                "Попередні показники",
-                width=12,
-                justify="right",
-                header_style="bold white on blue",
-            )
-            calc_table.add_column(
-                "Поточні показники",
-                width=12,
-                justify="right",
-                header_style="bold white on blue",
-            )
-            calc_table.add_column(
-                "Спожито", width=12, justify="right", header_style="bold white on blue"
-            )
-            calc_table.add_column(
-                "Пільги", width=12, justify="right", header_style="bold white on blue"
-            )
-            calc_table.add_column(
-                "Нараховано",
-                width=15,
-                justify="right",
-                header_style="bold white on blue",
-            )
+        calc_table.add_column(
+            "Послуга / Тариф", width=25, header_style="bold white on blue"
+        )
+        calc_table.add_column(
+            "Тариф", width=12, justify="right", header_style="bold white on blue"
+        )
+        calc_table.add_column(
+            "Попередні показники",
+            width=12,
+            justify="right",
+            header_style="bold white on blue",
+        )
+        calc_table.add_column(
+            "Поточні показники",
+            width=12,
+            justify="right",
+            header_style="bold white on blue",
+        )
+        calc_table.add_column(
+            "Спожито", width=12, justify="right", header_style="bold white on blue"
+        )
+        calc_table.add_column(
+            "Пільги", width=12, justify="right", header_style="bold white on blue"
+        )
+        calc_table.add_column(
+            "Нараховано",
+            width=15,
+            justify="right",
+            header_style="bold white on blue",
+        )
 
-            for item in invoice.items:
-                # Дані розрахунків
-                calc_table.add_row(
-                    item.tariff_name,
-                    str(item.tariff_price_at_billing),
-                    str(item.previous_reading),
-                    str(item.current_reading),
-                    str(item.consumption),
-                    str(item.benefit_discount),
-                    str(item.base_amount),
-                )
-
-                # Фінальний підсумок (використовуємо порожні комірки для зміщення тексту праворуч)
+        for item in self.invoice.items:
+            # Дані розрахунків
             calc_table.add_row(
-                "",
-                "",
-                "",
-                "",
-                "",
-                "[bold white on dark_green] Всього до сплати [/]",
-                f"[bold white on yellow] {invoice.amount_due} [/]",
+                item.tariff_name,
+                str(item.tariff_price_at_billing),
+                str(item.previous_reading),
+                str(item.current_reading),
+                str(item.consumption),
+                str(item.benefit_discount),
+                str(item.base_amount),
             )
 
-            # --- ВИВЕДЕННЯ В КОНСОЛЬ ---
+            # Фінальний підсумок (використовуємо порожні комірки для зміщення тексту праворуч)
+        calc_table.add_row(
+            "",
+            "",
+            "",
+            "",
+            "",
+            "[bold white on dark_green] Всього до сплати [/]",
+            f"[bold white on yellow] {self.invoice.amount_due} [/]",
+        )
 
-            console.print(info_table)
-            console.print(calc_table)
-            console.print(f"{'':*<122}")
+        # --- ВИВЕДЕННЯ В КОНСОЛЬ ---
+
+        console.print(info_table)
+        console.print(calc_table)
+        console.print(f"{'':*<122}")
 
     # Функція для підсвічування статусу
     @staticmethod

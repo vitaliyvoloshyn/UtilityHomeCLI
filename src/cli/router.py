@@ -22,8 +22,11 @@ class ScreenHistory:
         "menu_unauth",
         "generate_bills",
         "payment",
+        "payment_success",
         "recalculate",
         "recalculate_success",
+        "input_readings_value",
+        "invoice_detail",
     )
 
     def __init__(self):
@@ -60,8 +63,8 @@ class Router:
             "register_screen": RegisterScreenBuilder,
             "property_detail": PropertyDetailScreenBuilder,
             "account_list": AccountListScreenBuilder,
-            "account_unpaid_detail": AccountUnpaidDetailScreenBuilder,
-            "account_all_detail": AccountAllDetailScreenBuilder,
+            "invoice_detail": InvoiceDetailScreenBuilder,
+            # "account_all_detail": AccountAllDetailScreenBuilder,
             "account_add": AccountAddScreenBuilder,
             "category_list": CategoryListScreenBuilder,
             "category_add": CategoryAddScreenBuilder,
@@ -76,10 +79,12 @@ class Router:
             "consumption_meter_list": ConsumptionMeterListScreenBuilder,
             "readings_list": ConsumpionListScreenBuilder,
             "generate_bills_success": GenerateBillsSuccessScreenBuilder,
+            "regenerate_bill_success": InvoiceRegenerateSuccessScreenBuilder,
             "payment": PaymentScreenBuilder,
             "payment_success": PaymentSuccessScreenBuilder,
             "recalculate": RecalculateScreenBuilder,
             "recalculate_success": RecalculateSuccessScreenBuilder,
+            "invoice_list": InvoiceListScreenBuilder,
         }
 
     def get_screen_builder(self, action: str) -> type[BaseBuilder]:
@@ -123,6 +128,7 @@ class Router:
 
                 match next_screen:
                     case "login":
+                        self.context.login(cur_dto.payload)
                         cur_dto.action = "main_menu"
 
                     case "register":
@@ -212,6 +218,14 @@ class Router:
                         data = AccountNumberReculculate.model_validate(cur_dto.payload)
                         self.context.account_number_api.recalculate(data)
                         cur_dto.action = "recalculate_success"
+
+                    case "regenerate_request":
+                        invoice_id = cur_dto.params.get("invoice_id")
+                        if invoice_id:
+                            self.context.invoice_api.regenerate_bill(invoice_id)
+                            cur_dto.action = "regenerate_bill_success"
+                        else:
+                            cur_dto.action = "api_error"
 
                     case "back_step":
                         try:

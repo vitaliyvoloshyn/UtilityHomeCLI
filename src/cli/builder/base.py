@@ -1,6 +1,8 @@
 from copy import deepcopy
 from typing import Any
 
+from loguru import logger
+
 from ...api import *
 from ...screen.base_screen import BaseScreen
 from ...screen.schema import ComponentDTO
@@ -12,7 +14,7 @@ from ...screen.screen_components import (
     InputComponent,
     MenuHeaderComponent,
     TableAccountsList,
-    TableInvoiceList,
+    TableInvoice,
     TextLabel,
 )
 from ..context import AppContext
@@ -79,8 +81,8 @@ class BaseBuilder:
         self.screen.add(TableAccountsList(data))
         return self
 
-    def add_table_invoice_list(self, data: list[InvoiceResponse]):
-        self.screen.add(TableInvoiceList(data))
+    def add_table_invoice(self, data: InvoiceResponse):
+        self.screen.add(TableInvoice(data))
         return self
 
     def add_table_tariff_detail(self, data: DataTableDTO):
@@ -158,6 +160,13 @@ class BaseBuilder:
     def get_meters(self, property_id: int) -> list[MeterResponse]:
         meters = self.context.meter_api.list(property_id=property_id)
         return meters
+
+    def get_invoices(self, account_id: int):
+        return self.context.invoice_api.list(
+            account_id=account_id,
+            status=["unpaid", "partially_paid", "paid"],
+            limit_twelve=True,
+        )
 
 
 class UnauthScreenBuilder(BaseBuilder):
@@ -324,7 +333,7 @@ class AccountListScreenBuilder(BaseBuilder):
             choices.append(
                 {
                     "value": {
-                        "action": "account_unpaid_detail",
+                        "action": "invoice_list",
                         "params": {
                             "account_id": account.id,
                             "number": account.account_number,
@@ -351,36 +360,70 @@ class AccountListScreenBuilder(BaseBuilder):
         return choices
 
 
-class AccountUnpaidDetailScreenBuilder(BaseBuilder):
+class InvoiceListScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
         assert context.current_property is not None
         account_id = dto.params.get("account_id")
-        number = dto.params.get("number")
         provider_name = dto.params.get("provider_name")
+        invoices = self.get_invoices(account_id)  # type: ignore
+
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\nСписок рахунків на оплату за останній рік {provider_name}",
+            params={"params": {"account_id": account_id}},
+        )
+        self.add_choice_menu(self.get_invoice_choices(invoices))
+
+    def get_invoice_choices(self, invoices: list[InvoiceResponse]) -> list[dict]:
+        TOTAL_WIDTH = 80
+        choices = []
+        for invoice in invoices:
+            status_color = ""
+            match invoice.status.lower():
+                case "paid":
+                    status_color = "🟢"
+                case "partially_paid":
+                    status_color = "🟡"
+                case "unpaid":
+                    status_color = "🔴"
+            left_line = f"{status_color} {invoice.billing_period_display} - {invoice.amount_due} грн"
+            right_line = invoice.status_display
+            choices.append(
+                {
+                    "name": f"🧾 {left_line:.<{TOTAL_WIDTH - len(right_line)}}{right_line}",
+                    "value": {
+                        "action": "invoice_detail",
+                        "params": {"invoice_id": invoice.id},
+                    },
+                }
+            )
+        return choices
+
+
+class InvoiceDetailScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        account_id = dto.params.get("account_id")
+        invoice_id = dto.params.get("invoice_id")
+        invoice = self.get_invoice(invoice_id)  # type: ignore
+        logger.debug(invoice)
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
         )
         self.add_text_label(
-            f"{'Список неоплачених/частково оплачених рахунків на сплату комунальних послуг':-^122}"
+            f"Деталізація по рахунку на оплату {invoice.provider_name} за {invoice.billing_period_display}"
         )
-        self.add_table_invoice_list(self.get_invoices(account_id))  # type: ignore
+        self.add_table_invoice(invoice)  # type: ignore
         self.add_choice_menu(
             [
-                {
-                    "name": "📄 Показати всі рахунки на оплату",
-                    "value": {
-                        "action": "account_all_detail",
-                        "params": {"account_id": account_id},
-                    },
-                },
                 {
                     "value": {
                         "action": "payment",
                         "params": {
                             "account_id": account_id,
-                            "number": number,
-                            "provider_name": provider_name,
+                            "number": invoice.account_number,
+                            "provider_name": invoice.provider_name,
                         },
                     },
                     "name": "💰 Поповнити баланс особового рахунка",
@@ -394,60 +437,34 @@ class AccountUnpaidDetailScreenBuilder(BaseBuilder):
                     },
                     "name": "🧮 Створити перерахунок/корекцію",
                 },
+                {
+                    "value": {
+                        "action": "regenerate_request",
+                        "params": {
+                            "account_id": account_id,
+                            "invoice_id": invoice.id,
+                            "number": invoice.account_number,
+                            "provider_name": invoice.provider_name,
+                        },
+                    },
+                    "name": "✨ Оновити даний рахунок на оплату",
+                },
             ],
         )
 
-    def get_invoices(self, account_id: int):
-        return self.context.invoice_api.list(
-            account_id=account_id,
-            status=["unpaid", "partially_paid"],
-        )
+    def get_invoice(self, invoice_id: int):
+        return self.context.invoice_api.get(invoice_id)
 
 
-class AccountAllDetailScreenBuilder(BaseBuilder):
+class InvoiceRegenerateSuccessScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
         assert context.current_property is not None
-        account_id = dto.params.get("account_id")
-        number = dto.params.get("number")
-        provider_name = dto.params.get("provider_name")
         self.add_menu_header(
-            f"{context.current_property.name}, {context.current_property.address}"
+            f"{context.current_property.name}, {context.current_property.address}\nОновлення рахунку на оплату"
         )
-        self.add_text_label(
-            f"{'Список всіх рахунків на сплату комунальних послуг':-^122}"
-        )
-        self.add_table_invoice_list(self.get_invoices(account_id))  # type: ignore
-        self.add_choice_menu(
-            [
-                {
-                    "value": {
-                        "action": "payment",
-                        "params": {
-                            "account_id": account_id,
-                            "number": number,
-                            "provider_name": provider_name,
-                        },
-                    },
-                    "name": "💰 Поповнити баланс особового рахунка",
-                },
-                {
-                    "value": {
-                        "action": "recalculate",
-                        "params": {
-                            "account_id": account_id,
-                        },
-                    },
-                    "name": "🧮 Створити перерахунок/корекцію",
-                },
-            ],
-        )
-
-    def get_invoices(self, account_id: int):
-        return self.context.invoice_api.list(
-            account_id=account_id,
-            status=["unpaid", "partially_paid", "paid"],
-        )
+        self.add_text_label("Рахунок на оплату був успішно оновлений")
+        self.add_choice_menu([])
 
 
 class AccountAddScreenBuilder(BaseBuilder):
@@ -958,9 +975,6 @@ class RecalculateScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
         account_id = dto.params.get("account_id")
-        # number = dto.params.get("number")
-        # provider_name = dto.params.get("provider_name")
-        # amount = dto.params.get("amount")
         assert account_id is not None
         assert context.current_property is not None
         self.add_menu_header(
@@ -980,11 +994,6 @@ class RecalculateScreenBuilder(BaseBuilder):
 class RecalculateSuccessScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
-        # account_id = dto.params.get("account_id")
-        # number = dto.params.get("number")
-        # provider_name = dto.params.get("provider_name")
-        # amount = dto.params.get("amount")
-        # assert account_id is not None
         assert context.current_property is not None
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}\n[cyan]Створення перерахунку[/cyan]"

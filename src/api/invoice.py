@@ -10,4 +10,9 @@ class InvoiceAPI(BaseResourceAPI[InvoiceCreate, InvoiceUpdate, InvoiceResponse])
     response_model = InvoiceResponse
 
     def generate_bills(self):
-        self.client.request(method="POST",url=f"{self.endpoint}generate/")
+        self.client.request(method="POST", url=f"{self.endpoint}generate/")
+
+    def regenerate_bill(self, invoice_id: int):
+        self.client.request(
+            method="POST", url=f"{self.endpoint}{invoice_id}/regenerate/"
+        )
