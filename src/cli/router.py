@@ -27,6 +27,13 @@ class ScreenHistory:
         "recalculate_success",
         "input_readings_value",
         "invoice_detail",
+        "account_add",
+        "tariff_add",
+        "tariff_list",
+        "tariff_detail",
+        "meter_add",
+        "meter_add_request",
+        "meter_list",
     )
 
     def __init__(self):
@@ -90,6 +97,8 @@ class Router:
             "invoice_list": InvoiceListScreenBuilder,
             "payment_account_list": PaymentAccountListScreenBuilder,
             "payment_list": PaymentListScreenBuilder,
+            "meter_list": MeterListScreenBuilder,
+            "meter_add": MeterAddScreenBuilder,
         }
 
     def get_screen_builder(self, action: str) -> type[BaseBuilder]:
@@ -231,6 +240,11 @@ class Router:
                             cur_dto.action = "regenerate_bill_success"
                         else:
                             cur_dto.action = "api_error"
+
+                    case "meter_add_request":
+                        data = MeterCreate.model_validate(cur_dto.payload)
+                        self.context.meter_api.create(data)
+                        cur_dto.action = "meter_list"
 
                     case "back_step":
                         try:

@@ -287,7 +287,7 @@ class PropertyDetailScreenBuilder(BaseBuilder):
                     "value": {"action": "consumption_meter_list"},
                     "name": "⏲️  Споживання",
                 },
-                {"value": {"action": "meter_list"}, "name": "⏲️  Лічильники"},
+                {"value": {"action": "meter_list"}, "name": "⏲️ Лічильники"},
                 {
                     "value": {"action": "bill_list"},
                     "name": "📄 Рахунки на оплату комунальних послуг",
@@ -1067,4 +1067,45 @@ class PaymentListScreenBuilder(BaseBuilder):
             title='Платежі',
             headers=headers,
             rows=rows
+        )
+
+
+class MeterListScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        meters = self.context.meter_api.list(property_id=self.context.current_property.id)
+
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Список лічильників[/cyan]"
+        )
+        for meter in meters:
+            self.add_text_label(f"⏲️ {meter.name}")
+        self.add_choice_menu([
+            {
+                "name": "➕ Створити новий лічильник",
+                "value": {
+                    "action": "meter_add",
+                }
+            }]
+        )
+
+
+class MeterAddScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Створення нового лічильника[/cyan]",
+            params={"payload":{"property": self.context.current_property.id}}
+        )
+
+        self.add_input_component(
+            {"name":"Назва лічильника: "},
+            action='meter_add_request'
+        )
+        self.add_input_component(
+            {"unit_of_measure": "Одиниці вимірювання: "},
+            action='meter_add_request'
         )
