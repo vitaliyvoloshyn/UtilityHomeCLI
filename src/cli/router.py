@@ -16,7 +16,7 @@ from .context import AppContext
 
 
 class ScreenHistory:
-    skiped_actions = (
+    skipped_actions = (
         "",
         "back_step",
         "menu_unauth",
@@ -34,7 +34,7 @@ class ScreenHistory:
         self._screen_history: list[ComponentDTO] = []
 
     def save(self, screen: ComponentDTO):
-        if screen.action in self.skiped_actions:
+        if screen.action in self.skipped_actions:
             return
         if not isinstance(screen, ComponentDTO):
             raise TypeError("Аргумент screen не являється об'єктом класу ComponentDTO")
@@ -48,6 +48,10 @@ class ScreenHistory:
             raise ValueError("Історія наразі не містить ніяких записів")
         screen = self._screen_history.pop()
         return screen
+
+
+def get_date(year: int, month: int):
+    return date(year, month, 1)
 
 
 class Router:
@@ -64,7 +68,6 @@ class Router:
             "property_detail": PropertyDetailScreenBuilder,
             "account_list": AccountListScreenBuilder,
             "invoice_detail": InvoiceDetailScreenBuilder,
-            # "account_all_detail": AccountAllDetailScreenBuilder,
             "account_add": AccountAddScreenBuilder,
             "category_list": CategoryListScreenBuilder,
             "category_add": CategoryAddScreenBuilder,
@@ -77,7 +80,7 @@ class Router:
             "meter_readings_input": MeterReadingsInputScreenBuilder,
             "input_readings_value": InputReadingValueScreenBuilder,
             "consumption_meter_list": ConsumptionMeterListScreenBuilder,
-            "readings_list": ConsumpionListScreenBuilder,
+            "readings_list": ConsumptionListScreenBuilder,
             "generate_bills_success": GenerateBillsSuccessScreenBuilder,
             "regenerate_bill_success": InvoiceRegenerateSuccessScreenBuilder,
             "payment": PaymentScreenBuilder,
@@ -85,6 +88,8 @@ class Router:
             "recalculate": RecalculateScreenBuilder,
             "recalculate_success": RecalculateSuccessScreenBuilder,
             "invoice_list": InvoiceListScreenBuilder,
+            "payment_account_list": PaymentAccountListScreenBuilder,
+            "payment_list": PaymentListScreenBuilder,
         }
 
     def get_screen_builder(self, action: str) -> type[BaseBuilder]:
@@ -163,12 +168,12 @@ class Router:
                             if year is None and month is None:
                                 raise ValueError("Не задані рік або місяць")
                             if not isinstance(year, (int, str)) or not isinstance(
-                                month, (int, str)
+                                    month, (int, str)
                             ):
                                 raise TypeError("Рік/місяць мають бути числом")
                             year = int(year)
                             month = int(month)
-                            date_from = self.get_date(year, month)
+                            date_from = get_date(year, month)
                             tariff_ch_dto = TariffChange(
                                 tariff_id=cur_dto.payload["tariff_id"],
                                 new_price=cur_dto.payload["new_price"],
@@ -215,7 +220,7 @@ class Router:
                         cur_dto.action = "payment_success"
 
                     case "recalculate_request":
-                        data = AccountNumberReculculate.model_validate(cur_dto.payload)
+                        data = AccountNumberRecalculate.model_validate(cur_dto.payload)
                         self.context.account_number_api.recalculate(data)
                         cur_dto.action = "recalculate_success"
 
@@ -268,7 +273,8 @@ class Router:
     def reset_current_property(self):
         self.context.current_property = None
 
-    def clear_console(self):
+    @staticmethod
+    def clear_console():
         # ...
         os.system("cls" if os.name == "nt" else "clear")
 
@@ -283,6 +289,3 @@ class Router:
     def add_provider(self, payload: dict):
         provider_dto = ProviderCreate.model_validate(payload)
         self.context.provider_api.create(provider_dto)
-
-    def get_date(self, year: int, month: int):
-        return date(year, month, 1)

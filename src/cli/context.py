@@ -11,23 +11,26 @@ from ..api import (
     PropertyResponse,
     ProviderAPI,
     TariffAPI,
+    PaymentAPI
 )
 from ..api.session import session
 
 
 class AppContext:
     def __init__(
-        self,
-        api: type[APIClient] = APIClient,
-        property_api: type[PropertyAPI] = PropertyAPI,
-        category_api: type[CategoryAPI] = CategoryAPI,
-        provider_api: type[ProviderAPI] = ProviderAPI,
-        meter_api: type[MeterAPI] = MeterAPI,
-        meter_readings_api: type[MeterReadingAPI] = MeterReadingAPI,
-        account_number_api: type[AccountNumberAPI] = AccountNumberAPI,
-        tariff_api: type[TariffAPI] = TariffAPI,
-        invoice_api: type[InvoiceAPI] = InvoiceAPI,
+            self,
+            api: type[APIClient] = APIClient,
+            property_api: type[PropertyAPI] = PropertyAPI,
+            category_api: type[CategoryAPI] = CategoryAPI,
+            provider_api: type[ProviderAPI] = ProviderAPI,
+            meter_api: type[MeterAPI] = MeterAPI,
+            meter_readings_api: type[MeterReadingAPI] = MeterReadingAPI,
+            account_number_api: type[AccountNumberAPI] = AccountNumberAPI,
+            tariff_api: type[TariffAPI] = TariffAPI,
+            invoice_api: type[InvoiceAPI] = InvoiceAPI,
+            payment_api: type[PaymentAPI]=PaymentAPI
     ):
+        self.payment_api = payment_api()
         self.property_api = property_api()
         self.category_api = category_api()
         self.provider_api = provider_api()
@@ -68,7 +71,6 @@ class AppContext:
                 "Невідповідність типів. Тип аргументу property має бути PropertyResponse"
             )
         self._current_property = property
-
 
 # def get_context() -> AppContext:
 #     return AppContext()

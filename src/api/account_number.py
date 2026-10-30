@@ -2,7 +2,7 @@ from .base import BaseResourceAPI
 from .config import ACCOUNT_NUMBERS_URL
 from .models import (
     AccountNumberCreate,
-    AccountNumberReculculate,
+    AccountNumberRecalculate,
     AccountNumberResponse,
     AccountNumberUpdate,
 )
@@ -33,7 +33,7 @@ class AccountNumberAPI(
             json={"amount": amount},
         )
 
-    def recalculate(self, data: AccountNumberReculculate):
+    def recalculate(self, data: AccountNumberRecalculate):
         """Створення перерахунку
         Можна використовувати для створення корекції для синхронізації даних api та квитанції оператора
         або внесення в квитанції одноразових нарахувань типу опалення

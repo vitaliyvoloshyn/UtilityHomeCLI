@@ -39,13 +39,13 @@ class BaseBuilder:
         return self
 
     def add_choice_menu(
-        self,
-        items: list[dict[str, Any]],
-        message: str = "Оберіть дію:",
-        add_back_item: bool = True,
-        add_back_to_main_menu_item: bool = True,
-        add_logout_item: bool = True,
-        add_exit_item: bool = True,
+            self,
+            items: list[dict[str, Any]],
+            message: str = "Оберіть дію:",
+            add_back_item: bool = True,
+            add_back_to_main_menu_item: bool = True,
+            add_logout_item: bool = True,
+            add_exit_item: bool = True,
     ):
         """Приймає список типу
         [
@@ -66,7 +66,7 @@ class BaseBuilder:
         return self
 
     def add_input_component(
-        self, messages: dict[str, str], action: str, is_password: bool = False
+            self, messages: dict[str, str], action: str, is_password: bool = False
     ):
         """Приймає словник та повертає цей же словник, але замість значень підставляє значення, які ввів юзер.
         Value вхідного словника це меседжі, які будуть показані юзеру для введення даних"""
@@ -85,7 +85,7 @@ class BaseBuilder:
         self.screen.add(TableInvoice(data))
         return self
 
-    def add_table_tariff_detail(self, data: DataTableDTO):
+    def add_common_table(self, data: DataTableDTO):
         self.screen.add(CommonTable(data))
         return self
 
@@ -198,7 +198,6 @@ class MainMenuScreenBuilder(BaseBuilder):
         )
 
     def get_choices(self) -> list:
-
         choices: list = []
         properties = self.context.properties
         properties = properties[::-1]
@@ -293,7 +292,7 @@ class PropertyDetailScreenBuilder(BaseBuilder):
                     "value": {"action": "bill_list"},
                     "name": "📄 Рахунки на оплату комунальних послуг",
                 },
-                {"value": {"action": "payment_list"}, "name": "💳 Платежі"},
+                {"value": {"action": "payment_account_list"}, "name": "💳 Платежі"},
                 {"value": {"action": "tariff_list"}, "name": "📈 Тарифи"},
                 {"value": {"action": "benefit_list"}, "name": "🛡  Пільги та Субсидії"},
                 {
@@ -365,14 +364,26 @@ class InvoiceListScreenBuilder(BaseBuilder):
         super().__init__(context, dto)
         assert context.current_property is not None
         account_id = dto.params.get("account_id")
-        provider_name = dto.params.get("provider_name")
+        account = self.context.account_number_api.get(account_id)
         invoices = self.get_invoices(account_id)  # type: ignore
+        choices = self.get_invoice_choices(invoices)
+        choices.append({
+            "value": {
+                "action": "payment",
+                "params": {
+                    "account_id": account_id,
+                    "number": account.account_number,
+                    "provider_name": account.provider_details.name,
+                },
+            },
+            "name": "💰 Поповнити баланс особового рахунка",
+        }, )
 
         self.add_menu_header(
-            f"{context.current_property.name}, {context.current_property.address}\nСписок рахунків на оплату за останній рік {provider_name}",
+            f"{context.current_property.name}, {context.current_property.address}\nСписок рахунків на оплату за останній рік {account.provider_details.name}",
             params={"params": {"account_id": account_id}},
         )
-        self.add_choice_menu(self.get_invoice_choices(invoices))
+        self.add_choice_menu(choices)
 
     def get_invoice_choices(self, invoices: list[InvoiceResponse]) -> list[dict]:
         TOTAL_WIDTH = 80
@@ -417,17 +428,7 @@ class InvoiceDetailScreenBuilder(BaseBuilder):
         self.add_table_invoice(invoice)  # type: ignore
         self.add_choice_menu(
             [
-                {
-                    "value": {
-                        "action": "payment",
-                        "params": {
-                            "account_id": account_id,
-                            "number": invoice.account_number,
-                            "provider_name": invoice.provider_name,
-                        },
-                    },
-                    "name": "💰 Поповнити баланс особового рахунка",
-                },
+
                 {
                     "value": {
                         "action": "recalculate",
@@ -611,17 +612,17 @@ class TariffListScreenBuilder(BaseBuilder):
 class TariffDetailScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
-        tariff_id = dto.params.get("tariff_id")
-        assert tariff_id is not None
+        tariff_id = dto.params.get('tariff_id')
+        assert isinstance(tariff_id, int)
         assert context.current_property is not None
-        self.tariff = self.get_current_teariff(tariff_id)
+        self.tariff = self.get_current_tariff(tariff_id)
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}"
         )
         self.add_menu_header(
             f"Деталізація по тарифу: {self.tariff.name} ({self.tariff.price_per_unit:.2f})"
         )
-        self.add_table_tariff_detail(self.get_tariff_dto(self.tariff))
+        self.add_common_table(self.get_tariff_dto(self.tariff))
         self.add_choice_menu(
             [
                 {
@@ -634,7 +635,7 @@ class TariffDetailScreenBuilder(BaseBuilder):
             ]
         )
 
-    def get_current_teariff(self, tariff_id: int) -> TariffResponse:
+    def get_current_tariff(self, tariff_id: int) -> TariffResponse:
         cur_tariff = self.context.tariff_api.get(tariff_id)
         return cur_tariff
 
@@ -744,7 +745,7 @@ class TariffAddScreenBuilder(BaseBuilder):
 
     def get_choices_meters(self):
         meters = self.get_meters(self.context.current_property.id)  # type: ignore
-        choices = [
+        choices: list[dict] = [
             {
                 "name": "📁 Без лічильника",
                 "value": {
@@ -878,7 +879,7 @@ class ConsumptionMeterListScreenBuilder(BaseBuilder):
         return choices
 
 
-class ConsumpionListScreenBuilder(BaseBuilder):
+class ConsumptionListScreenBuilder(BaseBuilder):
     """Білдер екрану з переліком показників по вибраному лічильнику"""
 
     def __init__(self, context: AppContext, dto: ComponentDTO):
@@ -890,7 +891,7 @@ class ConsumpionListScreenBuilder(BaseBuilder):
         self.add_menu_header(
             f"{context.current_property.name}, {context.current_property.address}\n[cyan]Споживання[/cyan]"
         )
-        self.add_table_tariff_detail(self.get_data())
+        self.add_common_table(self.get_data())
         self.add_choice_menu([])
 
     def get_current_meter(self) -> MeterResponse:
@@ -1002,3 +1003,68 @@ class RecalculateSuccessScreenBuilder(BaseBuilder):
             "Перерахунок успішно збережений\nДля внесення поточного перерахунка в рахунок на оплату сформуйте квитанцію або повторно сформуйте квитанцію, якщо перерахунок припадає на період вже сформованої квитанції"
         )
         self.add_choice_menu([])
+
+
+class PaymentAccountListScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        accounts = self.get_accounts(self.context.current_property.id)
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Оберіть особовий рахунок для перегляду платежів[/cyan]"
+        )
+        self.add_choice_menu(self.get_account_choices(accounts),
+                             message="Оберіть особовий рахунок:")
+
+    def get_account_choices(self, accounts: list[AccountNumberResponse]) -> list[dict]:
+        choices: list[dict] = []
+        for account in accounts:
+            choices.append(
+                {
+                    "name": f"📁 {account.provider_details.name} ({account.account_number})",
+                    "value": {
+                        "action": "payment_list",
+                        "params": {
+                            "account_id": str(account.id),
+                            "provider_name": account.provider_details.name,
+                        }
+                    },
+                }
+            )
+        return choices
+
+
+class PaymentListScreenBuilder(BaseBuilder):
+    def __init__(self, context: AppContext, dto: ComponentDTO):
+        super().__init__(context, dto)
+        assert context.current_property is not None
+        acc_id = dto.params.get('account_id')
+        account = self.context.account_number_api.get(acc_id)
+        assert isinstance(acc_id, str)
+        payments = self.get_payments(acc_id, str(context.current_property.id))
+        self.add_menu_header(
+            f"{context.current_property.name}, {context.current_property.address}\n[cyan]Список платежів {account.provider_details.name}[/cyan]"
+        )
+        self.add_common_table(self.get_table_dto(payments))
+        self.add_choice_menu([])
+
+    def get_payments(self, account_id: str = "", property_id: str = "", limit: int = 12) -> list[PaymentResponse]:
+        """account_id та property_id це необов'язкові параметри, які будуть вставлені в url як параметри"""
+        payments = self.context.payment_api.list(
+            account_id=account_id,
+            property_id=property_id,
+            limit=limit)
+        return payments
+
+    def get_table_dto(self, payments: list[PaymentResponse]) -> DataTableDTO:
+        headers = ('Дата платежу', 'Сума платежу, грн')
+        rows = []
+        for payment in payments:
+            rows.append(
+                (str(payment.created_at), str(payment.amount))
+            )
+        return DataTableDTO(
+            title='Платежі',
+            headers=headers,
+            rows=rows
+        )

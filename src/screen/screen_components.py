@@ -360,7 +360,7 @@ class CommonTable(BaseComponent[None]):
             "header_style": "bold white on blue",
         }
         calc_table = Table(
-            show_header=True, box=SQUARE, show_lines=True, border_style="gray37"
+            show_header=True, box=SQUARE, show_lines=True, border_style="gray37",
         )
         for index, header in enumerate(self.data.headers):
             if index == 0:

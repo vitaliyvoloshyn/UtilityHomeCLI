@@ -6,7 +6,7 @@ from .invoice import InvoiceAPI
 from .meter import MeterAPI
 from .models import (
     AccountNumberCreate,
-    AccountNumberReculculate,
+    AccountNumberRecalculate,
     AccountNumberResponse,
     AccountNumberUpdate,
     CategoryCreate,
@@ -18,7 +18,11 @@ from .models import (
     ProviderCreate,
     ProviderResponse,
     ProviderUpdate,
+    PaymentCreate,
+    PaymentResponse,
+    PaymentUpdate,
 )
+from .payment import PaymentAPI
 from .property import PropertyAPI
 from .provider import ProviderAPI
 from .reading import MeterReadingAPI
@@ -79,5 +83,9 @@ __all__ = [
     "TariffResponse",
     "TariffUpdate",
     "TariffChange",
-    "AccountNumberReculculate",
+    "AccountNumberRecalculate",
+    "PaymentCreate",
+    "PaymentResponse",
+    "PaymentUpdate",
+    "PaymentAPI",
 ]

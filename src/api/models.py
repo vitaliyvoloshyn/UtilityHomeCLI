@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import datetime
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from pydantic import Field, model_validator
@@ -81,7 +83,7 @@ class AccountNumberResponse(APIModel):
     provider_details: ProviderResponse
 
 
-class AccountNumberReculculate(APIModel):
+class AccountNumberRecalculate(APIModel):
     id: int
     amount: float
     description: str
@@ -103,3 +105,25 @@ class UserResponse(APIModel):
     email: str | None = None
     first_name: str | None = None
     last_name: str | None = None
+
+
+class PaymentResponse(APIModel):
+    id: int
+    account: int
+    amount: Decimal = Field(..., decimal_places=2)
+    created_at: date
+    account_details: AccountNumberResponse
+
+    @model_validator(mode='before')
+    @classmethod
+    def created_at_prevalidate(self, data: Any):
+        print(data)
+        if isinstance(data, dict) and isinstance(data.get("created_at"), str):
+            data.update(created_at=data.get("created_at").split('T')[0])
+        return data
+
+
+class PaymentCreate(APIModel): ...
+
+
+class PaymentUpdate(APIModel): ...

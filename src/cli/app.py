@@ -14,7 +14,7 @@ class Levels(Enum):
 
 def logger_init():
     logger.remove(0)
-    logger.add(sys.stderr, level=Levels.debug.value)
+    logger.add(sys.stderr, level=Levels.info.value)
 
 
 logger_init()
