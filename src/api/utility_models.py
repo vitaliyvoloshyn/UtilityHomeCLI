@@ -24,6 +24,7 @@ class ChargeType(StrEnum):
 class MeterCreate(APIModel):
     name: str
     unit_of_measure: str | None = Field(default=None, max_length=20)
+    property: int
 
 
 class MeterUpdate(APIModel):

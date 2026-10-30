@@ -117,7 +117,6 @@ class PaymentResponse(APIModel):
     @model_validator(mode='before')
     @classmethod
     def created_at_prevalidate(self, data: Any):
-        print(data)
         if isinstance(data, dict) and isinstance(data.get("created_at"), str):
             data.update(created_at=data.get("created_at").split('T')[0])
         return data
