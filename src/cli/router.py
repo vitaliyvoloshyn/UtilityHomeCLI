@@ -9,7 +9,7 @@ from ..screen.schema import ComponentDTO
 from .builder import *
 from .builder.base import (
     BaseBuilder,
-    InputReadingValueScreenBuilder,
+    ReadingInputValueScreenBuilder,
     PaymentSuccessScreenBuilder,
 )
 from .context import AppContext
@@ -85,7 +85,7 @@ class Router:
             "tariff_change": TariffChangeScreenBuilder,
             "tariff_add": TariffAddScreenBuilder,
             "meter_readings_input": MeterReadingsInputScreenBuilder,
-            "input_readings_value": InputReadingValueScreenBuilder,
+            "input_readings_value": ReadingInputValueScreenBuilder,
             "consumption_meter_list": ConsumptionMeterListScreenBuilder,
             "readings_list": ConsumptionListScreenBuilder,
             "generate_bills_success": GenerateBillsSuccessScreenBuilder,
@@ -195,11 +195,7 @@ class Router:
                             self.context.error_message = str(e)
 
                     case "add_readings_request":
-                        data = MeterReadingCreate(
-                            meter=cur_dto.payload.get("meter_id"),  # type: ignore
-                            reading_value=cur_dto.payload.get("reading_value"),  # type: ignore
-                            reading_date=date.today(),
-                        )
+                        data = MeterReadingCreate.model_validate(cur_dto.payload)
                         self.context.meter_readings_api.create(data)
                         cur_dto.action = "meter_readings_input"
 
@@ -273,7 +269,6 @@ class Router:
             except KeyboardInterrupt:
                 cur_dto.action = "exit"
 
-            # self.current_builder = next_screen
             self.history.save(prev_dto)
             logger.debug(self.history._screen_history)
             prev_dto = cur_dto

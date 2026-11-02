@@ -813,7 +813,7 @@ class MeterReadingsInputScreenBuilder(BaseBuilder):
                 {
                     "name": f"📁 {meter.name}",
                     "value": {
-                        "payload": {"meter_id": meter.id},
+                        "payload": {"meter": meter.id},
                         "action": "input_readings_value",
                     },
                 }
@@ -821,10 +821,10 @@ class MeterReadingsInputScreenBuilder(BaseBuilder):
         return choices
 
 
-class InputReadingValueScreenBuilder(BaseBuilder):
+class ReadingInputValueScreenBuilder(BaseBuilder):
     def __init__(self, context: AppContext, dto: ComponentDTO):
         super().__init__(context, dto)
-        self.meter_id = dto.payload.get("meter_id")
+        self.meter_id = dto.payload.get("meter")
         assert context.current_property is not None
         assert self.meter_id is not None
         self.current_meter = self.get_current_meter()
@@ -834,7 +834,8 @@ class InputReadingValueScreenBuilder(BaseBuilder):
         )
         self.add_text_label(self.get_prev_reading())
         self.add_input_component(
-            messages={"reading_value": "Введіть поточні показники: "},
+            messages={"reading_value": "Введіть поточні показники: ",
+                      "reading_date": "Введіть дату зняття показників (у форматі 2026-12-31) або залиште пустим для поточної дати: "},
             action="add_readings_request",
         )
 

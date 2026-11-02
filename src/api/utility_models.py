@@ -3,8 +3,9 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from enum import StrEnum
+from typing import Any
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base_model import APIModel
 from .models import AccountNumberResponse
@@ -43,6 +44,13 @@ class MeterReadingCreate(APIModel):
     reading_date: date
     is_estimated: bool = False
 
+    @model_validator(mode='before')
+    @classmethod
+    def date_prevalidate(self, data: Any)->Any:
+        if isinstance(data, dict) and data.get('reading_date')=="":
+            data['reading_date']=date.today()
+        return data
+
 
 class MeterReadingUpdate(APIModel):
     meter: int | None = None
@@ -51,9 +59,13 @@ class MeterReadingUpdate(APIModel):
     is_estimated: bool | None = None
 
 
-class MeterReadingResponse(MeterReadingCreate):
+class MeterReadingResponse(APIModel):
     id: int
     consumption: int
+    meter: int
+    reading_value: int
+    reading_date: date
+    is_estimated: bool = False
 
 
 class TariffCreate(APIModel):
